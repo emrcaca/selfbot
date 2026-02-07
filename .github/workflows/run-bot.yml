@@ -21,8 +21,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,9 +29,9 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: |
-          npm install --silent
+        run: npm install --silent
 
-      - name: Run Bot
+      - name: Run Bot (keep alive 6 hours)
         run: |
-          timeout 21300 node main.js > /dev/null 2>&1 || true
+          node main.js &
+          sleep 21300
