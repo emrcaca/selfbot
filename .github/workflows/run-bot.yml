@@ -1,0 +1,39 @@
+name: Run Selfbot
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    env:
+      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      USER_TOKENS: ${{ secrets.USER_TOKENS }}
+      CHANNEL_IDS: ${{ secrets.CHANNEL_IDS }}
+      OWO_ID: 408785106942164992
+      WEBHOOK_URLS: ${{ secrets.WEBHOOK_URLS }}
+      DEFAULT_PRESENCE: invisible
+      ENABLE_CONSOLE_LOG: false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          npm install --silent
+
+      - name: Run Bot
+        run: |
+          timeout 21300 node main.js > /dev/null 2>&1 || true
