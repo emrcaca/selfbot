@@ -70,11 +70,22 @@ class ConfigManager {
             ? process.env.CHANNEL_IDS.split(',').map(id => id.trim()).filter(id => id)
             : [];
 
+        // Parse OWO ID - Check for scientific notation issue from YAML parsing
+        let owoId = process.env.OWO_ID;
+        
+        // If provided but not purely numeric (e.g. scientific notation 1.23E+17), fallback to default
+        if (owoId && !/^\d+$/.test(String(owoId))) {
+            console.warn(`⚠️  ConfigManager: OWO_ID "${owoId}" is not a valid numeric string (likely scientific notation). Using default ID instead.`);
+            owoId = DEFAULT_CONFIG.owo_ID;
+        } else {
+            owoId = owoId || DEFAULT_CONFIG.owo_ID;
+        }
+
         return {
             tokens: tokens,
             discordBotToken: process.env.DISCORD_BOT_TOKEN || null,
             CH_IDS: channelIds,
-            owo_ID: process.env.OWO_ID || DEFAULT_CONFIG.owo_ID,
+            owo_ID: owoId,
             telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || null,
             telegramChatId: process.env.TELEGRAM_CHAT_ID || null,
             DEFAULT_PRESENCE: process.env.DEFAULT_PRESENCE || DEFAULT_CONFIG.DEFAULT_PRESENCE,
