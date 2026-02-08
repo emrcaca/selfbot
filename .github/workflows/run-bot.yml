@@ -14,7 +14,6 @@ jobs:
       TOKENS: ${{ secrets.TOKENS }}
       CHANNEL_IDS: ${{ secrets.CHANNEL_IDS }}
       OWO_ID: 408785106942164992
-      WEBHOOK_URLS: ${{ secrets.WEBHOOK_URLS }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       DEFAULT_PRESENCE: invisible
