@@ -4,6 +4,7 @@ const configManager = require('./modules/config/configManager');
 const { handleUncaughtException, handleUnhandledRejection } = require('./modules/utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('./modules/services/discordService');
 const { initLogger, Loggers } = require('./modules/utils/logger');
+const telegramService = require('./modules/services/telegramService');
 
 // Set up global error handlers
 process.on('uncaughtException', handleUncaughtException);
@@ -94,9 +95,18 @@ const handleBotMessage = (child, index, userId) => async (msg) => {
             break;
 
         case 'captcha':
+            forwardToNotifier(msg);
+            telegramService.sendCaptchaAlert(msg);
+            break;
+
         case 'channel_monitor_alert':
+            forwardToNotifier(msg);
+            telegramService.sendChannelAlert(msg);
+            break;
+
         case 'captcha_solved':
             forwardToNotifier(msg);
+            telegramService.sendCaptchaSolved(msg);
             break;
 
         default:
@@ -177,6 +187,12 @@ const initialize = async () => {
 
         // Initialize logger with config
         initLogger(config);
+
+        // Initialize Telegram service
+        if (config.telegramBotToken && config.telegramChatId) {
+            telegramService.init(config.telegramBotToken, config.telegramChatId);
+            Loggers.Main.info('Telegram service initialized');
+        }
 
         // Log sanitized config for debugging
         if (config.enableConsoleLog) {

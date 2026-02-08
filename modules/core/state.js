@@ -119,20 +119,6 @@ function resumeBot() {
 }
 
 /**
- * Toggle a boolean state value
- * @param {string} stateKey - The key of the state to toggle
- * @param {string} logName - The name to use in log messages
- * @returns {void}
- */
-function toggleBooleanState(stateKey, logName = stateKey) {
-    botState[stateKey] = !botState[stateKey];
-    console.log(`[STATE] ${logName} ${botState[stateKey] ? 'açıldı' : 'kapatıldı'}.`);
-    if (stateKey === 'isOwoEnabled' && process.send) {
-        process.send({ type: 'owo_status_update', isOwoEnabled: botState.isOwoEnabled });
-    }
-}
-
-/**
  * Check if a loop should continue running
  * @param {string} loopType - Type of loop ('owo', 'whwb', or 'any')
  * @returns {boolean} Whether the loop should continue
@@ -151,6 +137,5 @@ module.exports = {
     CAPTCHA_KEYWORDS,
     stopBot,
     resumeBot,
-    toggleBooleanState,
     shouldRunLoop,
 };

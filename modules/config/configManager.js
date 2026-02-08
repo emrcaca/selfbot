@@ -5,7 +5,9 @@ const DEFAULT_CONFIG = {
     discordBotToken: null,
     owo_ID: '408785106942164992',
     DEFAULT_PRESENCE: 'invisible',
-    enableConsoleLog: false
+    enableConsoleLog: false,
+    telegramBotToken: null,
+    telegramChatId: null
 };
 
 // Valid presence options
@@ -59,7 +61,9 @@ class ConfigManager {
             CH_IDS: this._parseCommaSeparated('CHANNEL_IDS'),
             owo_ID: process.env.OWO_ID || DEFAULT_CONFIG.owo_ID,
             DEFAULT_PRESENCE: process.env.DEFAULT_PRESENCE || DEFAULT_CONFIG.DEFAULT_PRESENCE,
-            enableConsoleLog: process.env.ENABLE_CONSOLE_LOG === 'true'
+            enableConsoleLog: process.env.ENABLE_CONSOLE_LOG === 'true',
+            telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || DEFAULT_CONFIG.telegramBotToken,
+            telegramChatId: process.env.TELEGRAM_CHAT_ID || DEFAULT_CONFIG.telegramChatId
         };
     }
 

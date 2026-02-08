@@ -54,7 +54,6 @@ function handleUnhandledRejection(reason, promise) {
 }
 
 module.exports = {
-    sanitizeError,
     logError: logErrorWithContext,
     handleUncaughtException,
     handleUnhandledRejection

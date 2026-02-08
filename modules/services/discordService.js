@@ -1,7 +1,6 @@
 const { botState, DELAYS, PROBABILITIES } = require('../core/state');
 const { getRandomInt, delay } = require('../utils/helpers');
 const { logError } = require('../utils/errorHandler');
-const { conditionalLog } = require('../utils/helpers');
 
 // Discord API rate limiting
 const DISCORD_API_RATE_LIMIT = 5; // Max requests per second for general API calls
@@ -181,48 +180,6 @@ async function getChannel(client, channelId) {
 }
 
 /**
- * Get a user by ID with caching
- * @param {Client} client - Discord client instance
- * @param {string} userId - User ID
- * @returns {Promise<User|null>} User object or null if not found
- */
-async function getUser(client, userId) {
-    if (!userId) return null;
-
-    // Check cache first
-    const cached = userCache.get(userId);
-    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-        return cached.user;
-    }
-
-    // Clean expired entries
-    cleanExpiredCache(userCache);
-
-    try {
-        const user = client.users.cache.get(userId) || await client.users.fetch(userId);
-        if (user) {
-            // Cache the user
-            userCache.set(userId, {
-                user,
-                timestamp: Date.now()
-            });
-        }
-        return user;
-    } catch (error) {
-        return null;
-    }
-}
-
-/**
- * Clear all caches
- * @returns {void}
- */
-function clearAllCaches() {
-    channelCache.clear();
-    userCache.clear();
-}
-
-/**
  * Send typing indicator to a channel
  * @param {Client} client - Discord client instance
  * @param {string} channelId - Channel ID
@@ -266,27 +223,9 @@ async function sendMessage(client, channelId, messageContent) {
     return null;
 }
 
-/**
- * Update bot status (DISABLED for security)
- * Status updates are disabled to avoid detection by Discord.
- * Selfbots should not change their status programmatically.
- *
- * @param {Client} client - Discord client instance
- * @returns {Promise<void>}
- * @deprecated This function is disabled for security reasons
- */
-async function updateBotStatus(client) {
-    // Status updates are intentionally disabled
-    // Changing status programmatically can trigger Discord's detection systems
-    return;
-}
-
 module.exports = {
-    getChannel,
-    getUser,
     sendTyping,
     sendMessage,
     setTrackedTimeout,
-    clearAllTrackedTimeouts,
-    clearAllCaches
+    clearAllTrackedTimeouts
 };

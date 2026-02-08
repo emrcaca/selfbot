@@ -144,6 +144,5 @@ async function cycleChannels(client) {
 module.exports = {
     owoLoop,
     whwbLoop,
-    cycleChannels,
-    getCurrentChannelId
+    cycleChannels
 };

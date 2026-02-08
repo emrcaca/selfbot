@@ -1,9 +1,8 @@
 const configManager = require('../config/configManager');
 const { botState, CAPTCHA_KEYWORDS } = require('../core/state');
 const { stopBot, resumeBot } = require('../core/state');
-const { setTrackedTimeout, clearAllTrackedTimeouts, clearAllCaches } = require('../services/discordService');
+const { clearAllCaches } = require('../services/discordService');
 const { delay } = require('../utils/helpers');
-const { handleUncaughtException } = require('../utils/errorHandler');
 const { Loggers } = require('../utils/logger');
 
 /**
@@ -56,19 +55,6 @@ async function handleCaptchaNotification(client, message) {
  */
 async function handleIncomingMessage(client, message) {
     const config = configManager.getConfig();
-
-    if (message.channel.type === 'DM' && message.content.trim() === '!alert') {
-        if (process.send) {
-            process.send({
-                type: 'channel_monitor_alert',
-                userId: client.user.id,
-                channelId: 'örnek_kanal_id',
-                author: 'Örnek Kullanıcı',
-                content: 'Bu bir örnek mesaj içeriği.'
-            });
-        }
-        return;
-    }
 
     if (botState.monitoring && botState.isOwoEnabled && message.guild && message.channel.type !== 'DM') {
         const TEN_MINUTES_MS = 10 * 60 * 1000;
