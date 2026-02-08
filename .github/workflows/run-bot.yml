@@ -35,5 +35,5 @@ jobs:
 
       - name: Run Bot (keep alive 6 hours)
         run: |
-          node main.js &
+          node src/index.js &
           sleep 21300
