@@ -19,7 +19,6 @@ const configManager = require('../config/manager');
 const CAPTCHA_KEYWORDS = [
     'captcha',
     'verify',
-    'real',
     'human?',
     'ban',
     'banned',
