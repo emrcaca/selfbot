@@ -40,10 +40,10 @@ const DELAYS = {
     MESSAGE: { MIN: 200, MAX: 500 },
 
     /** Delay range between OWO commands */
-    OWO: { MIN: 10700, MAX: 12500 },
+    OWO: { MIN: 10500, MAX: 12500 },
 
     /** Delay range between WHWB commands */
-    WHWB: { MIN: 11700, MAX: 13500 },
+    WHWB: { MIN: 12500, MAX: 14500 },
 
     /** Duration range for bot sleep mode */
     SLEEP: { MIN: 30000, MAX: 90000 },
