@@ -179,13 +179,20 @@ async function handleCaptchaNotification(client, message) {
     // Send notification to main process
     if (process.send) {
         Loggers.Captcha.debug('Sending CAPTCHA message to main.js...');
+        
+        // Get guild and channel names directly from the selfbot client
+        const guildName = message.guild?.name || 'DM / Unknown Guild';
+        const channelName = message.channel.name || 'DM / Unknown Channel';
+
         process.send({
             type: 'captcha',
             userId: client.user.id,
             username: client.user.username,
             messageId: message.id,
             channelId: message.channel.id,
-            guildId: message.guild?.id || null
+            guildId: message.guild?.id || null,
+            guildName: guildName,
+            channelName: channelName
         });
         Loggers.Captcha.debug('CAPTCHA message sent to main.js');
     } else {

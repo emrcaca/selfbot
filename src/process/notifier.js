@@ -567,7 +567,7 @@ process.on('exit', (code) => {
 });
 
 async function handleCaptchaNotification(msgData) {
-  const { userId, messageId, channelId, guildId } = msgData;
+  const { userId, messageId, channelId, guildId, guildName, channelName } = msgData;
   conditionalLog('🔍 Bot.js: handleCaptchaNotification başlıyor...', { userId, messageId, channelId, guildId });
   try {
     conditionalLog('👤 Bot.js: Kullanıcı fetch ediliyor...', userId);
@@ -576,21 +576,23 @@ async function handleCaptchaNotification(msgData) {
     conditionalLog('💬 Bot.js: DM kanalı oluşturuluyor...');
     const dmChannel = await user.createDM();
     conditionalLog('✅ Bot.js: DM kanalı oluşturuldu:', dmChannel.id);
-    let guildName = 'Bilinmiyor';
-    let channelName = 'Bilinmiyor';
+    
+    // Use names sent from worker if available, otherwise try to fetch (fallback)
+    let finalGuildName = guildName || 'Bilinmiyor';
+    let finalChannelName = channelName || 'Bilinmiyor';
 
-    if (guildId) {
+    if (!guildName && guildId) {
       const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
-      if (guild) guildName = guild.name || 'Bilinmiyor';
+      if (guild) finalGuildName = guild.name || 'Bilinmiyor';
     }
 
-    if (channelId) {
+    if (!channelName && channelId) {
       const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
-      if (channel) channelName = channel.name || 'Bilinmiyor';
+      if (channel) finalChannelName = channel.name || 'Bilinmiyor';
     }
 
     let sentMessage = null;
-    const captchaContent = `⚠️ **CAPTCHA Tespit Edildi**\n\nCAPTCHA tespit edildi! Lütfen CAPTCHA'yı manuel olarak çözün.\n\n**Sunucu:** ${guildName}\n**Kanal:** ${channelName}`;
+    const captchaContent = `⚠️ **CAPTCHA Tespit Edildi**\n\nCAPTCHA tespit edildi! Lütfen CAPTCHA'yı manuel olarak çözün.\n\n**Sunucu:** ${finalGuildName}\n**Kanal:** ${finalChannelName}`;
 
     const textDisplay = new TextDisplayBuilder().setContent(captchaContent);
     const separator = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
