@@ -12,7 +12,7 @@ const { Client } = require('discord.js-selfbot-v13');
 const configManager = require('../config/manager');
 const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList } = require('../core/state');
 const { owoLoop, whwbLoop, cycleChannels } = require('../core/farming');
-const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState } = require('../handlers/messageHandler');
+const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState, handleBotMention } = require('../handlers/messageHandler');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('../services/discordService');
 const { Loggers } = require('../utils/logger');
@@ -113,6 +113,7 @@ client.on('messageCreate', async message => {
     try {
         await handleIncomingMessage(client, message);
         await handleCaptchaDM(client, message);
+        await handleBotMention(client, message);
     } catch (error) {
         Loggers.Bot.error(`Error handling message: ${error.message}`);
     }

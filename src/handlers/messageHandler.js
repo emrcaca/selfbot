@@ -13,8 +13,10 @@ const configManager = require('../config/manager');
 const { botState, CAPTCHA_KEYWORDS } = require('../core/state');
 const { stopBot, resumeBot } = require('../core/state');
 const { clearAllCaches } = require('../services/discordService');
+const { sendMessage: sendDiscordMessage } = require('../services/discordService');
 const { delay } = require('../utils/helpers');
 const { sendCaptchaNotification, sendCaptchaSolvedNotification, sendChannelAlert } = require('../services/telegramService');
+const { sendMessageToAI, isApiEnabled } = require('../services/openaiService');
 const { Loggers } = require('../utils/logger');
 
 // ============================================================================
@@ -451,13 +453,90 @@ async function handleCaptchaDM(client, message) {
 }
 
 // ============================================================================
-// EXPORTS
+// AI MENTION HANDLING
 // ============================================================================
+
+/**
+ * Handle bot mention and respond with AI
+ * 
+ * When the bot is mentioned in a message, this function:
+ * 1. Shows typing indicator
+ * 2. Waits 0.5 seconds
+ * 3. Sends the message to AI
+ * 4. Replies with AI response
+ * 
+ * @param {Client} client - Discord client instance
+ * @param {Message} message - Discord message object
+ * @returns {Promise<void>}
+ */
+async function handleBotMention(client, message) {
+    // Skip if API is not enabled
+    if (!isApiEnabled()) {
+        return;
+    }
+
+    // Only process guild messages (not DMs)
+    if (!message.guild || message.channel.type === 'DM') {
+        return;
+    }
+
+    // Ignore messages from bots and self
+    if (message.author.bot || message.author.id === client.user.id) {
+        return;
+    }
+
+    // Check if bot is mentioned
+    if (!message.mentions.has(client.user.id)) {
+        return;
+    }
+
+    try {
+        Loggers.Bot.info(`Bot mentioned by ${message.author.username} in channel ${message.channel.id}`);
+
+        // Extract the actual question (remove the mention)
+        const mentionRegex = new RegExp(`<@!?${client.user.id}>\s*`, 'g');
+        const userQuestion = message.content.replace(mentionRegex, '').trim();
+
+        // Skip if there's no actual question
+        if (!userQuestion) {
+            return;
+        }
+
+        // Send typing indicator
+        try {
+            await message.channel.sendTyping();
+        } catch (error) {
+            Loggers.Bot.debug('Failed to send typing indicator (non-critical)');
+        }
+
+        // Wait 0.5 seconds before responding
+        await delay(500);
+
+        // Get AI response
+        const aiResponse = await sendMessageToAI(userQuestion);
+
+        if (aiResponse) {
+            // Send the AI response
+            await sendDiscordMessage(client, message.channel.id, aiResponse);
+            Loggers.Bot.info('AI response sent successfully');
+        } else {
+            Loggers.Bot.warn('Failed to get AI response');
+        }
+
+    } catch (error) {
+        Loggers.Bot.error(`Error handling bot mention: ${error.message}`);
+    }
+}
+
+// ============================================================================
+// EXPORTS
+// ==============================================================================
 
 module.exports = {
     // Main handlers
     handleIncomingMessage,
     handleCaptchaDM,
+    handleBotMention,
 
     // CAPTCHA handling
     handleCaptchaNotification,
