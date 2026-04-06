@@ -18,6 +18,7 @@ const {
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('../services/discordService');
 const configManager = require('../config/manager');
+const { sendMessageToAI, isApiEnabled } = require('../services/openaiService');
 
 // Get console log setting from config
 let enableConsoleLog = false;
@@ -290,7 +291,28 @@ function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
 }
 
 client.on('messageCreate', async message => {
-  // Only handle DMs from authorized users
+  // AI mention response: only when BOT is mentioned in guild channels
+  if (message.inGuild() && !message.author.bot && message.mentions.has(client.user.id) && isApiEnabled()) {
+    try {
+      const mentionRegex = new RegExp(`<@!?${client.user.id}>\\s*`, 'g');
+      const userQuestion = message.content.replace(mentionRegex, '').trim();
+
+      if (userQuestion) {
+        try {
+          await message.channel.sendTyping();
+        } catch (_) {}
+
+        const aiResponse = await sendMessageToAI(userQuestion);
+        if (aiResponse) {
+          await message.reply(aiResponse);
+        }
+      }
+    } catch (error) {
+      conditionalError('❌ Bot.js: Mention AI response error:', error);
+    }
+  }
+
+  // DM helper command (existing behavior)
   if (!message.channel.isDMBased()) return;
   if (!authorizedUserIds.has(message.author.id)) return;
   if (message.author.bot) return;
