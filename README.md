@@ -68,11 +68,6 @@ OWO_ID="408785106942164992"
 TELEGRAM_BOT_TOKEN=""
 TELEGRAM_CHAT_ID=""
 
-# OpenAI Compatible API (NVIDIA NIM) - Opsiyonel
-OPENAI_API_KEY="YOUR_NVIDIA_API_KEY"
-OPENAI_API_URL="https://integrate.api.nvidia.com/v1"
-OPENAI_MODEL="OpenAI/gpt-oss-120b"
-
 # Detaylı Loglama (true/false)
 ENABLE_CONSOLE_LOG=true
 ```

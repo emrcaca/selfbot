@@ -18,7 +18,6 @@ const {
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('../services/discordService');
 const configManager = require('../config/manager');
-const { sendMessageToAI, isApiEnabled } = require('../services/openaiService');
 
 // Get console log setting from config
 let enableConsoleLog = false;
@@ -291,28 +290,7 @@ function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
 }
 
 client.on('messageCreate', async message => {
-  // AI mention response: only when BOT is mentioned in guild channels
-  if (message.inGuild() && !message.author.bot && message.mentions.has(client.user.id) && isApiEnabled()) {
-    try {
-      const mentionRegex = new RegExp(`<@!?${client.user.id}>\\s*`, 'g');
-      const userQuestion = message.content.replace(mentionRegex, '').trim();
-
-      if (userQuestion) {
-        try {
-          await message.channel.sendTyping();
-        } catch (_) {}
-
-        const aiResponse = await sendMessageToAI(userQuestion);
-        if (aiResponse) {
-          await message.reply(aiResponse);
-        }
-      }
-    } catch (error) {
-      conditionalError('❌ Bot.js: Mention AI response error:', error);
-    }
-  }
-
-  // DM helper command (existing behavior)
+  // Only handle DMs from authorized users
   if (!message.channel.isDMBased()) return;
   if (!authorizedUserIds.has(message.author.id)) return;
   if (message.author.bot) return;
@@ -589,7 +567,7 @@ process.on('exit', (code) => {
 });
 
 async function handleCaptchaNotification(msgData) {
-  const { userId, messageId, channelId, guildId, guildName, channelName } = msgData;
+  const { userId, messageId, channelId, guildId } = msgData;
   conditionalLog('🔍 Bot.js: handleCaptchaNotification başlıyor...', { userId, messageId, channelId, guildId });
   try {
     conditionalLog('👤 Bot.js: Kullanıcı fetch ediliyor...', userId);
@@ -598,23 +576,21 @@ async function handleCaptchaNotification(msgData) {
     conditionalLog('💬 Bot.js: DM kanalı oluşturuluyor...');
     const dmChannel = await user.createDM();
     conditionalLog('✅ Bot.js: DM kanalı oluşturuldu:', dmChannel.id);
-    
-    // Use names sent from worker if available, otherwise try to fetch (fallback)
-    let finalGuildName = guildName || 'Bilinmiyor';
-    let finalChannelName = channelName || 'Bilinmiyor';
+    let guildName = 'Bilinmiyor';
+    let channelName = 'Bilinmiyor';
 
-    if (!guildName && guildId) {
+    if (guildId) {
       const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
-      if (guild) finalGuildName = guild.name || 'Bilinmiyor';
+      if (guild) guildName = guild.name || 'Bilinmiyor';
     }
 
-    if (!channelName && channelId) {
+    if (channelId) {
       const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
-      if (channel) finalChannelName = channel.name || 'Bilinmiyor';
+      if (channel) channelName = channel.name || 'Bilinmiyor';
     }
 
     let sentMessage = null;
-    const captchaContent = `⚠️ **CAPTCHA Tespit Edildi**\n\nCAPTCHA tespit edildi! Lütfen CAPTCHA'yı manuel olarak çözün.\n\n**Sunucu:** ${finalGuildName}\n**Kanal:** ${finalChannelName}`;
+    const captchaContent = `⚠️ **CAPTCHA Tespit Edildi**\n\nCAPTCHA tespit edildi! Lütfen CAPTCHA'yı manuel olarak çözün.\n\n**Sunucu:** ${guildName}\n**Kanal:** ${channelName}`;
 
     const textDisplay = new TextDisplayBuilder().setContent(captchaContent);
     const separator = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);

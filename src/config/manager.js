@@ -24,10 +24,7 @@ const DEFAULT_CONFIG = {
     telegramBotToken: null,
     telegramChatId: null,
     DEFAULT_PRESENCE: 'invisible',
-    enableConsoleLog: false,
-    openaiApiKey: null,
-    openaiApiUrl: null,
-    openaiModel: 'OpenAI/gpt-oss-120b'
+    enableConsoleLog: false
 };
 
 /**
@@ -115,10 +112,7 @@ class ConfigManager {
             telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || null,
             telegramChatId: process.env.TELEGRAM_CHAT_ID || null,
             DEFAULT_PRESENCE: process.env.DEFAULT_PRESENCE || DEFAULT_CONFIG.DEFAULT_PRESENCE,
-            enableConsoleLog: this._parseBoolean(process.env.ENABLE_CONSOLE_LOG, false),
-            openaiApiKey: process.env.OPENAI_API_KEY || null,
-            openaiApiUrl: process.env.OPENAI_API_URL || null,
-            openaiModel: process.env.OPENAI_MODEL || DEFAULT_CONFIG.openaiModel
+            enableConsoleLog: this._parseBoolean(process.env.ENABLE_CONSOLE_LOG, false)
         };
     }
 

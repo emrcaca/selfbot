@@ -332,9 +332,10 @@ function getCacheStats() {
  *
  * @param {Client} client - Discord client instance
  * @param {string} channelId - Channel ID
+ * @param {Object} delaySource - Optional delay range to use instead of DELAYS.TYPING
  * @returns {Promise<void>}
  */
-async function sendTyping(client, channelId) {
+async function sendTyping(client, channelId, delaySource = null) {
     // Only send typing indicator based on probability
     if (Math.random() >= PROBABILITIES.TYPING) {
         return;
@@ -345,7 +346,9 @@ async function sendTyping(client, channelId) {
     if (channel?.isText() && channel.type !== 'GUILD_FORUM') {
         try {
             await channel.sendTyping();
-            await delay(getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX));
+            // Use provided delay source or default TYPING delay
+            const delayRange = delaySource || DELAYS.TYPING;
+            await delay(getRandomInt(delayRange.MIN, delayRange.MAX));
         } catch (error) {
             // Silently handle typing errors
             // Typing indicators are optional and not critical
@@ -362,9 +365,10 @@ async function sendTyping(client, channelId) {
  * @param {Client} client - Discord client instance
  * @param {string} channelId - Channel ID
  * @param {string} messageContent - Message content
+ * @param {Object} delaySource - Optional delay range to use instead of DELAYS.MESSAGE
  * @returns {Promise<Message|null>} Sent message or null if failed
  */
-async function sendMessage(client, channelId, messageContent) {
+async function sendMessage(client, channelId, messageContent, delaySource = null) {
     const channel = await getChannel(client, channelId);
 
     if (!channel?.isText()) {
@@ -374,7 +378,9 @@ async function sendMessage(client, channelId, messageContent) {
     return new Promise((resolve) => {
         addToMessageQueue(channelId, async () => {
             try {
-                await delay(getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX));
+                // Use provided delay source or default MESSAGE delay
+                const delayRange = delaySource || DELAYS.MESSAGE;
+                await delay(getRandomInt(delayRange.MIN, delayRange.MAX));
                 const sentMessage = await channel.send(messageContent);
                 resolve(sentMessage);
             } catch (error) {

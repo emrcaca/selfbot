@@ -19,6 +19,7 @@ const configManager = require('../config/manager');
 const CAPTCHA_KEYWORDS = [
     'captcha',
     'verify',
+    'real',
     'human?',
     'ban',
     'banned',
@@ -34,19 +35,19 @@ const CAPTCHA_KEYWORDS = [
  */
 const DELAYS = {
     /** Delay range for sending typing indicator */
-    TYPING: { MIN: 300, MAX: 1000 },
+    TYPING: { MIN: 200, MAX: 1000 },
 
     /** Delay range between sending messages */
-    MESSAGE: { MIN: 300, MAX: 800 },
+    MESSAGE: { MIN: 200, MAX: 500 },
 
     /** Delay range between OWO commands */
-    OWO: { MIN: 10700, MAX: 12700 },
+    OWO: { MIN: 10500, MAX: 13500 },
 
     /** Delay range between WHWB commands */
-    WHWB: { MIN: 11700, MAX: 13700 },
+    WHWB: { MIN: 15000, MAX: 17500 },
 
     /** Duration range for bot sleep mode */
-    SLEEP: { MIN: 30000, MAX: 90000 },
+    SLEEP: { MIN: 30000, MAX: 60000 },
 
     /** Delay range for cycling between channels */
     CHANNEL_CYCLE: { MIN: 600000, MAX: 900000 },
