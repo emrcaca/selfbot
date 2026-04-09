@@ -157,11 +157,11 @@ async function owoLoop(client) {
             botState.isProcessingOwo = true;
 
             try {
-                // Send typing indicator (randomly based on probability) using OWO delay
-                await sendTyping(client, channelId, DELAYS.OWO);
+                // Send typing indicator (randomly based on probability)
+                await sendTyping(client, channelId);
 
-                // Send OWO command using OWO delay
-                await sendMessage(client, channelId, COMMANDS.OWO, DELAYS.OWO);
+                // Send OWO command
+                await sendMessage(client, channelId, COMMANDS.OWO);
                 Loggers.Farm.info(`OWO command sent to channel: ${channelId}`);
 
                 // Random sleep after command
@@ -173,7 +173,7 @@ async function owoLoop(client) {
             } finally {
                 botState.isProcessingOwo = false;
 
-                // Delay before next iteration (reduced since delays are now included in typing/message)
+                // Delay before next iteration
                 await delay(getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX));
             }
 
@@ -216,21 +216,21 @@ async function whwbLoop(client) {
             botState.isProcessingWhWb = true;
 
             try {
-                // Send typing indicator using WHWB delay
-                await sendTyping(client, channelId, DELAYS.WHWB);
+                // Send typing indicator
+                await sendTyping(client, channelId);
 
-                // Send WH command using WHWB delay
-                const whSent = await sendMessage(client, channelId, COMMANDS.WH, DELAYS.WHWB);
+                // Send WH command
+                const whSent = await sendMessage(client, channelId, COMMANDS.WH);
 
                 if (whSent) {
-                    // Delay between WH and WB (using WHWB delay)
-                    await delay(getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX));
+                    // Delay between WH and WB
+                    await delay(getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX));
 
-                    // Send typing indicator before WB using WHWB delay
-                    await sendTyping(client, channelId, DELAYS.WHWB);
+                    // Send typing indicator before WB
+                    await sendTyping(client, channelId);
 
-                    // Send WB command using WHWB delay
-                    await sendMessage(client, channelId, COMMANDS.WB, DELAYS.WHWB);
+                    // Send WB command
+                    await sendMessage(client, channelId, COMMANDS.WB);
                     Loggers.Farm.info(`WH/WB commands sent to channel: ${channelId}`);
                 }
 
@@ -243,7 +243,7 @@ async function whwbLoop(client) {
             } finally {
                 botState.isProcessingWhWb = false;
 
-                // Delay before next iteration (reduced since delays are now included in typing/message)
+                // Delay before next iteration
                 await delay(getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX));
             }
 
