@@ -29,7 +29,7 @@ const COMMANDS = {
 /** Delay ranges in milliseconds */
 const LOOP_DELAYS = {
     /** Delay between loop iterations */
-    ITERATION: { MIN: 500, MAX: 2000 },
+    ITERATION: { MIN: 200, MAX: 1000 },
     /** Delay after errors */
     ERROR_RECOVERY: 5000,
     /** Delay after critical errors */
@@ -173,8 +173,13 @@ async function owoLoop(client) {
             } finally {
                 botState.isProcessingOwo = false;
 
+                // Calculate remaining delay after TYPING delay
+                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
+                const owoDelay = getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX);
+                const remainingDelay = Math.max(0, owoDelay - typingDelay);
+
                 // Delay before next iteration
-                await delay(getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX));
+                await delay(remainingDelay);
             }
 
         } catch (error) {
@@ -243,8 +248,16 @@ async function whwbLoop(client) {
             } finally {
                 botState.isProcessingWhWb = false;
 
+                // Calculate remaining delay after TYPING and MESSAGE delays
+                // whwbLoop uses: TYPING + MESSAGE + TYPING = 2*TYPING + MESSAGE
+                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
+                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
+                const whwbDelay = getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX);
+                const totalUsedDelay = (2 * typingDelay) + messageDelay;
+                const remainingDelay = Math.max(0, whwbDelay - totalUsedDelay);
+
                 // Delay before next iteration
-                await delay(getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX));
+                await delay(remainingDelay);
             }
 
         } catch (error) {
