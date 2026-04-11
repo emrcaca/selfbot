@@ -173,11 +173,8 @@ async function owoLoop(client) {
             } finally {
                 botState.isProcessingOwo = false;
 
-                // Delay before next iteration (OWO delay minus TYPING delay)
-                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
-                const owoDelay = getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX);
-                const finalDelay = Math.max(0, owoDelay - typingDelay);
-                await delay(finalDelay);
+                // Delay before next iteration
+                await delay(getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX));
             }
 
         } catch (error) {
@@ -246,12 +243,8 @@ async function whwbLoop(client) {
             } finally {
                 botState.isProcessingWhWb = false;
 
-                // Delay before next iteration (WHWB delay minus TYPING + MESSAGE delays)
-                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
-                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
-                const whwbDelay = getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX);
-                const finalDelay = Math.max(0, whwbDelay - typingDelay - messageDelay);
-                await delay(finalDelay);
+                // Delay before next iteration
+                await delay(getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX));
             }
 
         } catch (error) {
