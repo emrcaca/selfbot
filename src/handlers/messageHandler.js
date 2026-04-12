@@ -31,6 +31,8 @@ const CAPTCHA_VERIFICATION_DELAY = 15000; // 15 seconds
 const MAX_ALERT_CONTENT_LENGTH = 100;
 
 /** Zero-width character used by Discord */
+const ZERO_WIDTH_SPACE = '\u200B';
+
 // ============================================================================
 // STATE
 // ============================================================================
@@ -62,8 +64,8 @@ function getOwoBotId() {
  * @returns {string|null} Found keyword or null
  */
 function detectCaptchaKeyword(content) {
-    // Normalize content: lowercase and remove all zero-width spaces
-    const normalizedContent = content.toLowerCase().replace(/[\u200B\u200C\u200D\uFEFF\u00AD\u2060\u180E\u200E\u200F\u202A-\u202E\u2061-\u2064\u206A-\u206F]/g, '');
+    // Normalize content: lowercase and remove zero-width spaces
+    const normalizedContent = content.toLowerCase().replace(ZERO_WIDTH_SPACE, '');
 
     return CAPTCHA_KEYWORDS.find(keyword => normalizedContent.includes(keyword));
 }

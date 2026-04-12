@@ -29,7 +29,7 @@ const COMMANDS = {
 /** Delay ranges in milliseconds */
 const LOOP_DELAYS = {
     /** Delay between loop iterations */
-    ITERATION: { MIN: 200, MAX: 1000 },
+    ITERATION: { MIN: 500, MAX: 2000 },
     /** Delay after errors */
     ERROR_RECOVERY: 5000,
     /** Delay after critical errors */
