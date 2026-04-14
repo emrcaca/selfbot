@@ -681,7 +681,7 @@ function handleClearChannels() {
 }
 
 /**
- * Handle click command - click a button in a channel
+ * Handle click command - get button info from last bot message
  *
  * @param {Object} message - Command message
  */
@@ -706,8 +706,7 @@ async function handleClickCommand(message) {
                 if (!button) {
                     resultMessage = '❌ Buton bulunamadı.';
                 } else {
-                    await botMessage.clickButton(button.customId);
-                    resultMessage = `✅ Butona tıklandı! (${button.label || button.customId})`;
+                    resultMessage = `✅ Buton bilgisi: **${button.label || button.customId}**`;
                 }
             }
         }
