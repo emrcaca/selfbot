@@ -475,7 +475,7 @@ client.on('interactionCreate', async interaction => {
       } else if (interaction.commandName === 'click') {
         const channelId = interaction.options.getString('channel_id');
 
-        await sendV2Reply(interaction, '### CLICK\nTıklanıyor...');
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         if (process.send) {
           process.send({
