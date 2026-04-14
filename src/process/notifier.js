@@ -227,18 +227,6 @@ const commands = [
         required: false
       }
     ]
-  },
-  {
-    name: 'click',
-    description: 'Bir kanaldaki son bot mesajındaki butona tıkla.',
-    options: [
-      {
-        name: 'channel_id',
-        description: 'Tıklanacak mesajın bulunduğu kanal ID',
-        type: ApplicationCommandOptionType.String,
-        required: true
-      }
-    ]
   }
 ];
 
@@ -472,32 +460,6 @@ client.on('interactionCreate', async interaction => {
         });
 
         await sendV2Reply(interaction, `### SETCH\n${resultMessage}`);
-      } else if (interaction.commandName === 'click') {
-        const channelId = interaction.options.getString('channel_id');
-
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-
-        if (process.send) {
-          process.send({
-            type: 'click_command',
-            channelId: channelId,
-            interactionId: interaction.id,
-            targetUserId: interaction.user.id
-          });
-        } else {
-          return await sendV2Reply(interaction, '### CLICK\n❌ İşlem yapılamıyor.');
-        }
-
-        const { resultMessage } = await new Promise((resolve, reject) => {
-          setTimeout(() => {
-            interactionHandlers.delete(interaction.id);
-            reject(new Error('Selfbot yanıt vermedi.'));
-          }, 15000);
-          interactionHandlers.set(interaction.id, resolve);
-        });
-
-        await sendV2Reply(interaction, `### CLICK\n${resultMessage}`);
-        return;
       }
 
     } else if (interaction.isButton()) {

@@ -20,6 +20,7 @@ const DEFAULT_CONFIG = {
     tokens: [],
     discordBotToken: null,
     CH_IDS: [],
+    GIVEAWAY_CHANNEL_IDS: [],
     owo_ID: '408785106942164992',
     telegramBotToken: null,
     telegramChatId: null,
@@ -102,6 +103,7 @@ class ConfigManager {
             tokens: this._parseTokens(),
             discordBotToken: process.env.DISCORD_BOT_TOKEN || null,
             CH_IDS: this._parseChannelIds(),
+            GIVEAWAY_CHANNEL_IDS: this._parseGiveawayChannelIds(),
             owo_ID: this._parseOwoId(),
             telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || null,
             telegramChatId: process.env.TELEGRAM_CHAT_ID || null,
@@ -152,6 +154,17 @@ class ConfigManager {
         }
 
         return process.env.CHANNEL_IDS
+            .split(',')
+            .map(id => id.trim())
+            .filter(id => id.length > 0);
+    }
+
+    _parseGiveawayChannelIds() {
+        if (!process.env.GIVEAWAY_CHANNEL_IDS) {
+            return [];
+        }
+
+        return process.env.GIVEAWAY_CHANNEL_IDS
             .split(',')
             .map(id => id.trim())
             .filter(id => id.length > 0);

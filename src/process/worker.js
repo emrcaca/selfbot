@@ -13,6 +13,7 @@ const configManager = require('../config/manager');
 const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList } = require('../core/state');
 const { owoLoop, whwbLoop, cycleChannels } = require('../core/farming');
 const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState } = require('../handlers/messageHandler');
+const { handleGiveawayMessage } = require('../handlers/giveawayHandler');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('../services/discordService');
 const { Loggers } = require('../utils/logger');
@@ -113,6 +114,11 @@ client.on('messageCreate', async message => {
     try {
         await handleIncomingMessage(client, message);
         await handleCaptchaDM(client, message);
+
+        const config = configManager.getConfig();
+        if (config?.GIVEAWAY_CHANNEL_IDS?.length > 0) {
+            await handleGiveawayMessage(message, config.GIVEAWAY_CHANNEL_IDS);
+        }
     } catch (error) {
         Loggers.Bot.error(`Error handling message: ${error.message}`);
     }
@@ -144,10 +150,6 @@ process.on('message', async (message) => {
 
         case 'setch_command':
             handleSetchCommand(message);
-            break;
-
-        case 'click_command':
-            handleClickCommand(message);
             break;
 
         default:
@@ -678,50 +680,6 @@ function handleAddChannels(channelIdsString) {
 function handleClearChannels() {
     botState.channelIds = [];
     return 'Permanent channel list cleared successfully.';
-}
-
-/**
- * Handle click command - get button info from last bot message
- *
- * @param {Object} message - Command message
- */
-async function handleClickCommand(message) {
-    const { channelId, interactionId } = message;
-    let resultMessage = '';
-
-    try {
-        const channel = await client.channels.fetch(channelId);
-        if (!channel || !channel.isText()) {
-            resultMessage = '❌ Geçerli bir metin kanalı bulunamadı.';
-        } else {
-            const messages = await channel.messages.fetch({ limit: 10 });
-            const botMessage = messages.find(m => m.author.bot && m.components.length > 0);
-
-            if (!botMessage) {
-                resultMessage = '❌ Kanaldas bot mesajı veya buton bulunamadı.';
-            } else {
-                const actionRow = botMessage.components[0];
-                const button = actionRow?.components[0];
-
-                if (!button) {
-                    resultMessage = '❌ Buton bulunamadı.';
-                } else {
-                    resultMessage = `✅ Buton bilgisi: **${button.label || button.customId}**`;
-                }
-            }
-        }
-    } catch (error) {
-        Loggers.Bot.error(`Click command error: ${error.message}`);
-        resultMessage = `❌ Hata: ${error.message}`;
-    }
-
-    if (process.send) {
-        process.send({
-            type: 'komut_sonucu',
-            resultMessage,
-            interactionId
-        });
-    }
 }
 
 // ============================================================================
