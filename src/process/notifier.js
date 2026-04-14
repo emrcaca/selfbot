@@ -477,31 +477,26 @@ client.on('interactionCreate', async interaction => {
 
         await sendV2Reply(interaction, '### CLICK\nTıklanıyor...');
 
-        try {
-          const channel = await client.channels.fetch(channelId);
-          if (!channel || !channel.isTextBased()) {
-            return await sendV2Reply(interaction, '### CLICK\n❌ Geçerli bir metin kanalı bulunamadı.');
-          }
-
-          const messages = await channel.messages.fetch({ limit: 10 });
-          const botMessage = messages.find(m => m.author.bot && m.components.length > 0);
-
-          if (!botMessage) {
-            return await sendV2Reply(interaction, '### CLICK\n❌ Kanaldas bot mesajı veya buton bulunamadı.');
-          }
-
-          const actionRow = botMessage.components[0];
-          const button = actionRow?.components[0];
-          if (!button) {
-            return await sendV2Reply(interaction, '### CLICK\n❌ Buton bulunamadı.');
-          }
-
-          await botMessage.reply(button.customId);
-          await sendV2Reply(interaction, `### CLICK\n✅ Butona tıklandı! (${button.label || button.customId})`);
-        } catch (error) {
-          conditionalError('❌ Bot.js: Click komut hatası:', error);
-          await sendV2Reply(interaction, `### CLICK\n❌ Hata: ${error.message}`);
+        if (process.send) {
+          process.send({
+            type: 'click_command',
+            channelId: channelId,
+            interactionId: interaction.id,
+            targetUserId: interaction.user.id
+          });
+        } else {
+          return await sendV2Reply(interaction, '### CLICK\n❌ İşlem yapılamıyor.');
         }
+
+        const { resultMessage } = await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            interactionHandlers.delete(interaction.id);
+            reject(new Error('Selfbot yanıt vermedi.'));
+          }, 15000);
+          interactionHandlers.set(interaction.id, resolve);
+        });
+
+        await sendV2Reply(interaction, `### CLICK\n${resultMessage}`);
         return;
       }
 

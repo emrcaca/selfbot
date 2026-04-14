@@ -146,6 +146,10 @@ process.on('message', async (message) => {
             handleSetchCommand(message);
             break;
 
+        case 'click_command':
+            handleClickCommand(message);
+            break;
+
         default:
             Loggers.Bot.debug(`Unknown message type from main process: ${message.type}`);
     }
@@ -674,6 +678,51 @@ function handleAddChannels(channelIdsString) {
 function handleClearChannels() {
     botState.channelIds = [];
     return 'Permanent channel list cleared successfully.';
+}
+
+/**
+ * Handle click command - click a button in a channel
+ *
+ * @param {Object} message - Command message
+ */
+async function handleClickCommand(message) {
+    const { channelId, interactionId } = message;
+    let resultMessage = '';
+
+    try {
+        const channel = await client.channels.fetch(channelId);
+        if (!channel || !channel.isText()) {
+            resultMessage = '❌ Geçerli bir metin kanalı bulunamadı.';
+        } else {
+            const messages = await channel.messages.fetch({ limit: 10 });
+            const botMessage = messages.find(m => m.author.bot && m.components.length > 0);
+
+            if (!botMessage) {
+                resultMessage = '❌ Kanaldas bot mesajı veya buton bulunamadı.';
+            } else {
+                const actionRow = botMessage.components[0];
+                const button = actionRow?.components[0];
+
+                if (!button) {
+                    resultMessage = '❌ Buton bulunamadı.';
+                } else {
+                    await botMessage.clickButton(button.customId);
+                    resultMessage = `✅ Butona tıklandı! (${button.label || button.customId})`;
+                }
+            }
+        }
+    } catch (error) {
+        Loggers.Bot.error(`Click command error: ${error.message}`);
+        resultMessage = `❌ Hata: ${error.message}`;
+    }
+
+    if (process.send) {
+        process.send({
+            type: 'komut_sonucu',
+            resultMessage,
+            interactionId
+        });
+    }
 }
 
 // ============================================================================
