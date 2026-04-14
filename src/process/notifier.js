@@ -496,7 +496,7 @@ client.on('interactionCreate', async interaction => {
             return await sendV2Reply(interaction, '### CLICK\n❌ Buton bulunamadı.');
           }
 
-          await botMessage.clickButton(button.customId);
+          await botMessage.reply(button.customId);
           await sendV2Reply(interaction, `### CLICK\n✅ Butona tıklandı! (${button.label || button.customId})`);
         } catch (error) {
           conditionalError('❌ Bot.js: Click komut hatası:', error);
