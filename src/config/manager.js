@@ -23,14 +23,8 @@ const DEFAULT_CONFIG = {
     owo_ID: '408785106942164992',
     telegramBotToken: null,
     telegramChatId: null,
-    DEFAULT_PRESENCE: 'invisible',
     enableConsoleLog: false
 };
-
-/**
- * Valid Discord presence statuses
- */
-const VALID_PRESENCES = ['invisible', 'online', 'idle', 'dnd'];
 
 /**
  * Placeholder patterns that indicate configuration values need to be replaced
@@ -111,7 +105,6 @@ class ConfigManager {
             owo_ID: this._parseOwoId(),
             telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || null,
             telegramChatId: process.env.TELEGRAM_CHAT_ID || null,
-            DEFAULT_PRESENCE: process.env.DEFAULT_PRESENCE || DEFAULT_CONFIG.DEFAULT_PRESENCE,
             enableConsoleLog: this._parseBoolean(process.env.ENABLE_CONSOLE_LOG, false)
         };
     }
@@ -228,12 +221,6 @@ class ConfigManager {
         // Validate OWO ID
         this._validateOwoId(config, errors);
 
-        // Validate Telegram configuration (optional)
-        this._validateTelegramConfig(config, errors);
-
-        // Validate presence
-        this._validatePresence(config, errors);
-
         // Validate console log flag
         this._validateConsoleLog(config, errors);
 
@@ -331,48 +318,6 @@ class ConfigManager {
             errors.push('OWO_ID must be a non-empty string');
         } else if (!DISCORD_ID_REGEX.test(config.owo_ID)) {
             errors.push('OWO_ID must be numeric');
-        }
-    }
-
-    /**
-     * Validate Telegram configuration
-     *
-     * @private
-     * @param {Object} config - Configuration object
-     * @param {string[]} errors - Array to collect validation errors
-     */
-    _validateTelegramConfig(config, errors) {
-        const hasBotToken = !!config.telegramBotToken;
-        const hasChatId = !!config.telegramChatId;
-
-        // If either is set, both must be present
-        if (hasBotToken || hasChatId) {
-            if (!hasBotToken) {
-                errors.push('TELEGRAM_BOT_TOKEN is required when TELEGRAM_CHAT_ID is set');
-            }
-            if (!hasChatId) {
-                errors.push('TELEGRAM_CHAT_ID is required when TELEGRAM_BOT_TOKEN is set');
-            }
-
-            if (hasBotToken && this._isPlaceholder(config.telegramBotToken)) {
-                errors.push('TELEGRAM_BOT_TOKEN is a placeholder. Please replace with actual token');
-            }
-            if (hasChatId && this._isPlaceholder(config.telegramChatId)) {
-                errors.push('TELEGRAM_CHAT_ID is a placeholder. Please replace with actual chat ID');
-            }
-        }
-    }
-
-    /**
-     * Validate presence status
-     *
-     * @private
-     * @param {Object} config - Configuration object
-     * @param {string[]} errors - Array to collect validation errors
-     */
-    _validatePresence(config, errors) {
-        if (config.DEFAULT_PRESENCE && !VALID_PRESENCES.includes(config.DEFAULT_PRESENCE)) {
-            errors.push(`DEFAULT_PRESENCE must be one of: ${VALID_PRESENCES.join(', ')}`);
         }
     }
 

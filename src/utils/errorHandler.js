@@ -30,7 +30,6 @@ const ERROR_CONTEXTS = {
     UNCAUGHT_EXCEPTION: 'UNCAUGHT_EXCEPTION',
     UNHANDLED_REJECTION: 'UNHANDLED_REJECTION',
     DISCORD_API: 'DISCORD_API',
-    TELEGRAM_API: 'TELEGRAM_API',
     FARMING: 'FARMING',
     CAPTCHA: 'CAPTCHA',
     CONFIG: 'CONFIG',
@@ -271,8 +270,6 @@ function classifyError(error) {
     const message = error.message.toLowerCase();
     if (message.includes('discord') || message.includes('api')) {
         return ERROR_CONTEXTS.DISCORD_API;
-    } else if (message.includes('telegram') || message.includes('bot')) {
-        return ERROR_CONTEXTS.TELEGRAM_API;
     } else if (message.includes('captcha') || message.includes('verify')) {
         return ERROR_CONTEXTS.CAPTCHA;
     } else if (message.includes('config') || message.includes('env')) {
@@ -384,11 +381,6 @@ function getRecoveryOptions(error) {
             } else if (error.code === 10006) {
                 options.suggestions.push('Channel not found - verify channel ID');
             }
-            break;
-
-        case ERROR_CONTEXTS.TELEGRAM_API:
-            options.suggestions.push('Verify Telegram bot token is valid');
-            options.suggestions.push('Check Telegram chat ID is correct');
             break;
 
         case ERROR_CONTEXTS.CAPTCHA:

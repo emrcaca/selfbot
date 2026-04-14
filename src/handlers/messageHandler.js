@@ -185,7 +185,9 @@ async function handleCaptchaNotification(client, message) {
             username: client.user.username,
             messageId: message.id,
             channelId: message.channel.id,
-            guildId: message.guild?.id || null
+            channelName: message.channel.name || null,
+            guildId: message.guild?.id || null,
+            guildName: message.guild?.name || null
         });
         Loggers.Captcha.debug('CAPTCHA message sent to main.js');
     } else {
