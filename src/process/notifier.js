@@ -490,7 +490,8 @@ client.on('interactionCreate', async interaction => {
             return await sendV2Reply(interaction, '### CLICK\n❌ Kanaldas bot mesajı veya buton bulunamadı.');
           }
 
-          const button = botMessage.components.first()?.component;
+          const actionRow = botMessage.components[0];
+          const button = actionRow?.components[0];
           if (!button) {
             return await sendV2Reply(interaction, '### CLICK\n❌ Buton bulunamadı.');
           }
