@@ -227,6 +227,18 @@ const commands = [
         required: false
       }
     ]
+  },
+  {
+    name: 'click',
+    description: 'Bir kanaldaki son bot mesajındaki butona tıkla.',
+    options: [
+      {
+        name: 'channel_id',
+        description: 'Tıklanacak mesajın bulunduğu kanal ID',
+        type: ApplicationCommandOptionType.String,
+        required: true
+      }
+    ]
   }
 ];
 
@@ -460,6 +472,36 @@ client.on('interactionCreate', async interaction => {
         });
 
         await sendV2Reply(interaction, `### SETCH\n${resultMessage}`);
+      } else if (interaction.commandName === 'click') {
+        const channelId = interaction.options.getString('channel_id');
+
+        await sendV2Reply(interaction, '### CLICK\nTıklanıyor...');
+
+        try {
+          const channel = await client.channels.fetch(channelId);
+          if (!channel || !channel.isTextBased()) {
+            return await sendV2Reply(interaction, '### CLICK\n❌ Geçerli bir metin kanalı bulunamadı.');
+          }
+
+          const messages = await channel.messages.fetch({ limit: 10 });
+          const botMessage = messages.find(m => m.author.bot && m.components.length > 0);
+
+          if (!botMessage) {
+            return await sendV2Reply(interaction, '### CLICK\n❌ Kanaldas bot mesajı veya buton bulunamadı.');
+          }
+
+          const button = botMessage.components.first()?.component;
+          if (!button) {
+            return await sendV2Reply(interaction, '### CLICK\n❌ Buton bulunamadı.');
+          }
+
+          await botMessage.clickButton(button.customId);
+          await sendV2Reply(interaction, `### CLICK\n✅ Butona tıklandı! (${button.label || button.customId})`);
+        } catch (error) {
+          conditionalError('❌ Bot.js: Click komut hatası:', error);
+          await sendV2Reply(interaction, `### CLICK\n❌ Hata: ${error.message}`);
+        }
+        return;
       }
 
     } else if (interaction.isButton()) {
