@@ -115,9 +115,10 @@ client.on('messageCreate', async message => {
         await handleIncomingMessage(client, message);
         await handleCaptchaDM(client, message);
 
+        // Handle giveaway messages
         const config = configManager.getConfig();
         if (config?.GIVEAWAY_CHANNEL_IDS?.length > 0) {
-            await handleGiveawayMessage(message, config.GIVEAWAY_CHANNEL_IDS);
+            await handleGiveawayMessage(message, config.GIVEAWAY_CHANNEL_IDS, client);
         }
     } catch (error) {
         Loggers.Bot.error(`Error handling message: ${error.message}`);

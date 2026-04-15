@@ -12,11 +12,54 @@ const { Loggers } = require('../utils/logger');
 
 const DELAY_MS = 5000;
 
-async function handleGiveawayMessage(message, channelIds) {
+/**
+ * Check if the bot has access to a channel
+ */
+async function hasChannelAccess(channel, client) {
+    try {
+        // Check if channel is a text channel
+        if (!channel.isText()) {
+            Loggers.Bot.debug(`Channel ${channel.id} is not a text channel`);
+            return false;
+        }
+
+        // Get member in the guild
+        const member = channel.guild?.members.me || await channel.guild?.members.fetch(client.user.id).catch(() => null);
+        if (!member) {
+            Loggers.Bot.debug(`Could not fetch member for user ${client.user.id} in guild ${channel.guild?.id}`);
+            return false;
+        }
+
+        // Check ViewChannel permission
+        if (!channel.permissionsFor(member).has('ViewChannel')) {
+            Loggers.Bot.debug(`No ViewChannel permission in channel ${channel.id}`);
+            return false;
+        }
+
+        // Check SendMessages permission (needed for clicking buttons)
+        if (!channel.permissionsFor(member).has('SendMessages')) {
+            Loggers.Bot.debug(`No SendMessages permission in channel ${channel.id}`);
+            return false;
+        }
+
+        return true;
+    } catch (err) {
+        Loggers.Bot.error(`Error checking channel access: ${err.message}`);
+        return false;
+    }
+}
+
+async function handleGiveawayMessage(message, channelIds, client) {
     if (!channelIds || channelIds.length === 0) return;
     if (!channelIds.includes(message.channel.id)) return;
     if (!message.author.bot) return;
     if (message.author.id === message.client.user?.id) return;
+
+    // Check channel access
+    const hasAccess = await hasChannelAccess(message.channel, message.client);
+    if (!hasAccess) {
+        return;
+    }
 
     Loggers.Bot.debug(`Giveaway message detected in channel ${message.channel.id} from bot ${message.author.username}`);
 
@@ -106,21 +149,28 @@ async function handleGiveawayMessage(message, channelIds) {
                     }
                 } else {
                     Loggers.Bot.debug(`No 🎉 button found in ${message.channel.id}`);
-
-                    // Check for 🎊 reaction (reaction-based giveaway)
-                    const tadaReaction = message.reactions.cache.get('🎊');
-                    if (tadaReaction) {
-                        try {
-                            // React with 🎊 to join the giveaway
-                            await message.react('🎊');
-                            Loggers.Bot.info(`Reacted with 🎊 on ${message.channel.id}`);
-                        } catch (error) {
-                            Loggers.Bot.debug(`Error reacting with 🎊: ${error.message}`);
-                        }
-                    } else {
-                        Loggers.Bot.debug(`No 🎊 reaction found in ${message.channel.id}`);
-                    }
                 }
+            }
+
+            // Check for 🎊 reaction (reaction-based giveaway)
+            // This runs even if buttons exist, as some giveaways use both
+            const tadaReaction = message.reactions.cache.get('🎊');
+            if (tadaReaction) {
+                try {
+                    // Check if we already reacted
+                    const hasReacted = tadaReaction.users.cache.has(message.client.user.id);
+                    if (hasReacted) {
+                        Loggers.Bot.debug(`Already reacted with 🎊 on ${message.channel.id}`);
+                    } else {
+                        // React with 🎊 to join the giveaway
+                        await message.react('🎊');
+                        Loggers.Bot.info(`Reacted with 🎊 on ${message.channel.id}`);
+                    }
+                } catch (error) {
+                    Loggers.Bot.debug(`Error reacting with 🎊: ${error.message}`);
+                }
+            } else {
+                Loggers.Bot.debug(`No 🎊 reaction found in ${message.channel.id}`);
             }
         } catch (error) {
             Loggers.Bot.error(`Giveaway handler error: ${error.message}`);
