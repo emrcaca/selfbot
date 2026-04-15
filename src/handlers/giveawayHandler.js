@@ -2,8 +2,8 @@
  * Giveaway Handler Module
  *
  * Automatically joins giveaways by:
- * - Reacting to confetti_ball emoji buttons
- * - Clicking tada emoji buttons
+ * - Clicking buttons with 🎉 emoji
+ * - Reacting with 🎊 emoji
  *
  * @module handlers/giveawayHandler
  */
@@ -18,32 +18,107 @@ async function handleGiveawayMessage(message, channelIds) {
     if (!message.author.bot) return;
     if (message.author.id === message.client.user?.id) return;
 
+    Loggers.Bot.debug(`Giveaway message detected in channel ${message.channel.id} from bot ${message.author.username}`);
+
     const channel = message.channel;
-    if (!channel.isText()) return;
+    if (!channel.isText()) {
+        Loggers.Bot.debug(`Channel ${message.channel.id} is not a text channel`);
+        return;
+    }
 
     const me = channel.guild?.members.me || await channel.guild?.members.fetch(message.client.user.id).catch(() => null);
-    if (!me) return;
-    if (!channel.permissionsFor(me).has('ViewChannel')) return;
+    if (!me) {
+        Loggers.Bot.debug(`Could not fetch member for user ${message.client.user.id}`);
+        return;
+    }
+    if (!channel.permissionsFor(me).has('ViewChannel')) {
+        Loggers.Bot.debug(`No ViewChannel permission in ${message.channel.id}`);
+        return;
+    }
+
+    // Log components for debugging
+    if (message.components && message.components.length > 0) {
+        Loggers.Bot.debug(`Message has ${message.components.length} component row(s)`);
+        message.components.forEach((row, rowIndex) => {
+            if (row.components && row.components.length > 0) {
+                row.components.forEach((component, compIndex) => {
+                    const emojiInfo = component.emoji ? `Emoji: ${component.emoji.name || component.emoji.id || 'unknown'}` : 'Emoji: none';
+                    Loggers.Bot.debug(`  [${rowIndex}][${compIndex}] Type: ${component.type}, Label: ${component.label}, CustomId: ${component.customId}, ${emojiInfo}`);
+                });
+            }
+        });
+    } else {
+        Loggers.Bot.debug(`Message has no components`);
+    }
 
     setTimeout(async () => {
         try {
-            if (channel.permissionsFor(me).has('AddReactions')) {
-                const hasConfetti = message.components.flatMap(row => row.components).some(b => b.emoji?.name === 'confetti_ball');
-                if (hasConfetti) {
-                    Loggers.Bot.info(`Giveaway reaction: 🎊 on ${message.channel.id}`);
-                    await message.react('🎊');
-                }
-            }
+            Loggers.Bot.debug(`Checking for giveaway actions in ${message.channel.id}`);
 
-            if (channel.permissionsFor(me).has('UseButtons')) {
-                const hasTada = message.components.flatMap(row => row.components).some(b => b.emoji?.name === 'tada');
-                if (hasTada) {
-                    const tadaButton = message.components.flatMap(row => row.components).find(b => b.emoji?.name === 'tada');
-                    const targetButton = tadaButton || message.components[0]?.components[0];
+            // Find button with 🎉 emoji (check by emoji character, emoji ID, or label)
+            if (message.components && message.components.length > 0) {
+                const tadaButton = message.components.flatMap(row => row.components).find(b => {
+                    if (!b) return false;
 
-                    if (targetButton) {
-                        Loggers.Bot.info(`Giveaway button: ${targetButton.label || targetButton.customId} on ${message.channel.id}`);
-                        await message.clickButton(targetButton.customId);
+                    // Check emoji name (unicode emoji)
+                    if (b.emoji && b.emoji.name && b.emoji.name.includes('🎉')) return true;
+
+                    // Check emoji ID (custom emoji)
+                    if (b.emoji && b.emoji.id) {
+                        // Custom emoji - check if it might be a tada emoji
+                        // We'll try to click it if it's a giveaway button
+                        return true;
+                    }
+
+                    // Check label for 🎉 emoji
+                    if (b.label && b.label.includes('🎉')) return true;
+
+                    // Check if it's a giveaway-related button (common patterns)
+                    if (b.label && (
+                        b.label.toLowerCase().includes('giveaway') ||
+                        b.label.toLowerCase().includes('join') ||
+                        b.label.toLowerCase().includes('katıl')
+                    )) return true;
+
+                    return false;
+                });
+
+                if (tadaButton) {
+                    Loggers.Bot.info(`Clicking button: ${tadaButton.label || tadaButton.customId} with 🎉 emoji on ${message.channel.id}`);
+
+                    try {
+                        // Try clicking with the button object directly
+                        await message.clickButton(tadaButton);
+                        Loggers.Bot.info(`Button clicked successfully on ${message.channel.id}`);
+                    } catch (error) {
+                        Loggers.Bot.debug(`Error clicking button: ${error.message}`);
+                        // Fallback: try with customId if available
+                        if (tadaButton.customId) {
+                            try {
+                                await message.clickButton(tadaButton.customId);
+                                Loggers.Bot.info(`Button clicked with customId on ${message.channel.id}`);
+                            } catch (e) {
+                                Loggers.Bot.error(`Error with customId: ${e.message}`);
+                            }
+                        } else {
+                            Loggers.Bot.error(`Button has no customId and cannot be clicked`);
+                        }
+                    }
+                } else {
+                    Loggers.Bot.debug(`No 🎉 button found in ${message.channel.id}`);
+
+                    // Check for 🎊 reaction (reaction-based giveaway)
+                    const tadaReaction = message.reactions.cache.get('🎊');
+                    if (tadaReaction) {
+                        try {
+                            // React with 🎊 to join the giveaway
+                            await message.react('🎊');
+                            Loggers.Bot.info(`Reacted with 🎊 on ${message.channel.id}`);
+                        } catch (error) {
+                            Loggers.Bot.debug(`Error reacting with 🎊: ${error.message}`);
+                        }
+                    } else {
+                        Loggers.Bot.debug(`No 🎊 reaction found in ${message.channel.id}`);
                     }
                 }
             }
