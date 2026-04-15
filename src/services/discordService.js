@@ -94,6 +94,8 @@ function clearAllCaches() {
 // ============================================================================
 
 async function sendTyping(client, channelId) {
+    if (Math.random() >= PROBABILITIES.TYPING) return;
+
     const channel = await getChannel(client, channelId);
     if (channel?.isText() && channel.type !== 'GUILD_FORUM') {
         try {

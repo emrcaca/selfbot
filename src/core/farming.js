@@ -157,23 +157,8 @@ async function owoLoop(client) {
             botState.isProcessingOwo = true;
 
             try {
-                // Calculate delay for this iteration
-                const owoDelay = getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX);
-                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
-                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
-
-                // Send typing indicator at 50-70% of the delay (with probability)
-                if (Math.random() < PROBABILITIES.TYPING) {
-                    const typingStartDelay = Math.floor(owoDelay * (0.5 + Math.random() * 0.2));
-                    setTimeout(async () => {
-                        if (shouldRunLoop('owo')) {
-                            await sendTyping(client, channelId);
-                        }
-                    }, typingStartDelay);
-                }
-
-                // Wait for the full delay before sending message
-                await delay(owoDelay);
+                // Send typing indicator (randomly based on probability)
+                await sendTyping(client, channelId);
 
                 // Send OWO command
                 await sendMessage(client, channelId, COMMANDS.OWO);
@@ -187,6 +172,13 @@ async function owoLoop(client) {
                 await delay(LOOP_DELAYS.ERROR_RECOVERY);
             } finally {
                 botState.isProcessingOwo = false;
+
+                // Calculate adjusted delay (subtract typing and message delays from OWO delay)
+                const owoDelay = getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX);
+                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
+                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
+                const adjustedDelay = Math.max(0, owoDelay - typingDelay - messageDelay);
+                await delay(adjustedDelay);
             }
 
         } catch (error) {
@@ -228,23 +220,8 @@ async function whwbLoop(client) {
             botState.isProcessingWhWb = true;
 
             try {
-                // Calculate delay for this iteration
-                const whwbDelay = getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX);
-                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
-                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
-
-                // Send typing indicator at 50-70% of the delay (with probability)
-                if (Math.random() < PROBABILITIES.TYPING) {
-                    const typingStartDelay = Math.floor(whwbDelay * (0.5 + Math.random() * 0.2));
-                    setTimeout(async () => {
-                        if (shouldRunLoop('whwb')) {
-                            await sendTyping(client, channelId);
-                        }
-                    }, typingStartDelay);
-                }
-
-                // Wait for the full delay before sending message
-                await delay(whwbDelay);
+                // Send typing indicator
+                await sendTyping(client, channelId);
 
                 // Send WH command
                 const whSent = await sendMessage(client, channelId, COMMANDS.WH);
@@ -253,10 +230,8 @@ async function whwbLoop(client) {
                     // Delay between WH and WB
                     await delay(getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX));
 
-                    // Send typing indicator before WB (with probability)
-                    if (Math.random() < PROBABILITIES.TYPING) {
-                        await sendTyping(client, channelId);
-                    }
+                    // Send typing indicator before WB
+                    await sendTyping(client, channelId);
 
                     // Send WB command
                     await sendMessage(client, channelId, COMMANDS.WB);
@@ -271,6 +246,13 @@ async function whwbLoop(client) {
                 await delay(LOOP_DELAYS.ERROR_RECOVERY);
             } finally {
                 botState.isProcessingWhWb = false;
+
+                // Calculate adjusted delay (subtract typing and message delays from WHWB delay)
+                const whwbDelay = getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX);
+                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
+                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
+                const adjustedDelay = Math.max(0, whwbDelay - typingDelay - messageDelay);
+                await delay(adjustedDelay);
             }
 
         } catch (error) {
