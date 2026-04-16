@@ -14,8 +14,8 @@ const { Loggers } = require('../utils/logger');
 /**
  * Handle emoji monitoring for messages
  *
- * Checks if the message is from the monitored bot in the monitored channel
- * and looks for the specified emojis. If found, sends a DM notification.
+ * Checks if the message contains "OwO" and has any of the specified emojis.
+ * If found, sends a DM notification.
  *
  * @param {Client} client - Discord client instance
  * @param {Message} message - Message to check
@@ -31,17 +31,17 @@ async function handleEmojiMonitoring(client, message) {
         return;
     }
 
-    // Check if message is from the monitored bot
-    if (message.author.id !== botState.monitoredBotId) {
-        return;
-    }
-
     // Skip own messages
     if (message.author.id === client.user.id) {
         return;
     }
 
-    Loggers.Bot.debug(`Emoji monitoring: Checking message from bot ${message.author.id} in channel ${message.channel.id}`);
+    // Check if message contains "OwO" (case-insensitive)
+    if (!message.content.toLowerCase().includes('owo')) {
+        return;
+    }
+
+    Loggers.Bot.debug(`Emoji monitoring: Checking OwO message in channel ${message.channel.id}`);
 
     // Check for monitored emojis in the message
     const foundEmojis = [];
@@ -95,14 +95,13 @@ async function handleEmojiMonitoring(client, message) {
 
     // If any monitored emojis were found, send DM notification
     if (foundEmojis.length > 0) {
-        Loggers.Bot.info(`Found ${foundEmojis.length} monitored emoji(s) in message from bot ${message.author.id}`);
+        Loggers.Bot.info(`Found ${foundEmojis.length} monitored emoji(s) in OwO message`);
 
         try {
             // Send DM to the user
             const dmChannel = await client.users.createDM(client.user.id);
 
-            let dmMessage = `🎯 **Emoji Detected**\n\n`;
-            dmMessage += `**Bot:** ${message.author.username} (${message.author.id})\n`;
+            let dmMessage = `🎯 **OwO Emoji Detected**\n\n`;
             dmMessage += `**Channel:** ${message.channel.name} (${message.channel.id})\n`;
             dmMessage += `**Message:** ${message.content.substring(0, 100)}${message.content.length > 100 ? '...' : ''}\n\n`;
             dmMessage += `**Found Emojis:**\n`;
@@ -117,7 +116,7 @@ async function handleEmojiMonitoring(client, message) {
             dmMessage += `\n**Message Link:** https://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`;
 
             await dmChannel.send(dmMessage);
-            Loggers.Bot.info(`DM notification sent for emoji detection`);
+            Loggers.Bot.info(`DM notification sent for OwO emoji detection`);
 
         } catch (error) {
             Loggers.Bot.error(`Failed to send DM notification: ${error.message}`);
