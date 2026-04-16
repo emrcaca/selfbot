@@ -8,7 +8,7 @@
  * @module core/farming
  */
 
-const { botState, DELAYS, PROBABILITIES } = require('./state');
+const { botState, DELAYS, PROBABILITIES, startEmojiMonitoring, stopEmojiMonitoring } = require('./state');
 const { shouldRunLoop } = require('./state');
 const { sendTyping, sendMessage } = require('../services/discordService');
 const { getRandomInt, delay } = require('../utils/helpers');

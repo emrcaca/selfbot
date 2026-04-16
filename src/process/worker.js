@@ -10,10 +10,11 @@
 
 const { Client } = require('discord.js-selfbot-v13');
 const configManager = require('../config/manager');
-const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList } = require('../core/state');
+const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList, startEmojiMonitoring, stopEmojiMonitoring } = require('../core/state');
 const { owoLoop, whwbLoop, cycleChannels } = require('../core/farming');
 const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState } = require('../handlers/messageHandler');
 const { handleGiveawayMessage } = require('../handlers/giveawayHandler');
+const { handleEmojiMonitoring } = require('../handlers/emojiMonitorHandler');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('../services/discordService');
 const { Loggers } = require('../utils/logger');
@@ -120,6 +121,9 @@ client.on('messageCreate', async message => {
         if (config?.GIVEAWAY_CHANNEL_IDS?.length > 0) {
             await handleGiveawayMessage(message, config.GIVEAWAY_CHANNEL_IDS, client);
         }
+
+        // Handle emoji monitoring
+        await handleEmojiMonitoring(client, message);
     } catch (error) {
         Loggers.Bot.error(`Error handling message: ${error.message}`);
     }
@@ -344,6 +348,15 @@ function startTemporaryFarm(channelId, channelTimer) {
     const remainingTime = MAX_FARM_TIME_PER_CHANNEL - channelTimer.elapsed;
     const remainingMinutes = Math.round(remainingTime / 60000);
 
+    // Start emoji monitoring if configured
+    const config = configManager.getConfig();
+    if (config?.emojiMonitoringEmojis?.length > 0) {
+        // Use reaction_Id as the bot ID to monitor
+        const reaction_Id = '519287796549156864';
+        startEmojiMonitoring(channelId, reaction_Id, config.emojiMonitoringEmojis);
+        Loggers.Bot.info(`Emoji monitoring started for bot ${reaction_Id} in channel ${channelId}`);
+    }
+
     // Set up timeout to stop farming
     botState.activeTimedFarm = {
         channelId: channelId,
@@ -355,6 +368,9 @@ function startTemporaryFarm(channelId, channelTimer) {
                 stopBot();
                 botState.isOwoEnabled = false;
                 channelTimer.elapsed = 0;
+
+                // Stop emoji monitoring
+                stopEmojiMonitoring();
 
                 // Restore original channel IDs
                 if (botState.activeTimedFarm.originalChannelIds) {
@@ -389,6 +405,9 @@ function stopTemporaryFarm(_channelId, channelTimer) {
     if (botState.activeTimedFarm.timeoutId) {
         clearTimeout(botState.activeTimedFarm.timeoutId);
     }
+
+    // Stop emoji monitoring
+    stopEmojiMonitoring();
 
     // Update elapsed time
     const startTime = botState.activeTimedFarm.startTime;
