@@ -309,6 +309,16 @@ async function cycleChannels(client) {
             // Advance to next channel
             advanceToNextChannel();
 
+            // Update emoji monitoring to the new channel if enabled
+            if (botState.emojiMonitoringEnabled && botState.monitoredEmojis.length > 0) {
+                const newChannelId = getCurrentChannelId();
+                if (newChannelId && newChannelId !== botState.monitoredChannelId) {
+                    const reaction_Id = '519287796549156864';
+                    startEmojiMonitoring(newChannelId, reaction_Id, botState.monitoredEmojis);
+                    Loggers.Farm.info(`Emoji monitoring updated to new channel: ${newChannelId}`);
+                }
+            }
+
         } catch (error) {
             Loggers.Farm.error(`Channel cycling error: ${error.message}`);
             await delay(LOOP_DELAYS.CRITICAL_ERROR);

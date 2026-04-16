@@ -466,10 +466,23 @@ async function handlePermanentFarm(userId) {
         botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
         botState.tempFarmChannel = null;
 
+        // Start emoji monitoring if configured
+        if (botState.emojiMonitoringEnabled) {
+            // Get the first channel from the list for initial monitoring
+            const firstChannelId = channelList[0];
+            if (firstChannelId) {
+                const reaction_Id = '519287796549156864';
+                startEmojiMonitoring(firstChannelId, reaction_Id, botState.monitoredEmojis);
+                Loggers.Bot.info(`Emoji monitoring started for permanent farming in channel ${firstChannelId}`);
+            }
+        }
+
         resumeBot();
         return `Farming enabled for permanent channels (${channelSource} list with ${channelList.length} channel(s)). Will start shortly.`;
     } else {
         stopBot();
+        // Stop emoji monitoring
+        stopEmojiMonitoring();
         // Restore original channel list
         botState.channelIds = originalChannelIds;
         botState.currentChannelIndex = originalChannelIndex;
