@@ -153,7 +153,6 @@ async function handleGiveawayMessage(message, channelIds, client) {
             }
 
             // Check for 🎊 reaction (reaction-based giveaway)
-            // This runs even if buttons exist, as some giveaways use both
             const tadaReaction = message.reactions.cache.get('🎊');
             if (tadaReaction) {
                 try {
@@ -162,9 +161,9 @@ async function handleGiveawayMessage(message, channelIds, client) {
                     if (hasReacted) {
                         Loggers.Bot.debug(`Already reacted with 🎊 on ${message.channel.id}`);
                     } else {
-                        // React with 🎊 to join the giveaway
+                        // React with 🎊 to join the giveaway (click on existing reaction)
                         await message.react('🎊');
-                        Loggers.Bot.info(`Reacted with 🎊 on ${message.channel.id}`);
+                        Loggers.Bot.info(`Reacted with 🎊 to join giveaway on ${message.channel.id}`);
                     }
                 } catch (error) {
                     Loggers.Bot.debug(`Error reacting with 🎊: ${error.message}`);
