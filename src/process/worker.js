@@ -157,6 +157,10 @@ process.on('message', async (message) => {
             handleSetchCommand(message);
             break;
 
+        case 'emoji_monitoring_command':
+            handleEmojiMonitoringCommand(message);
+            break;
+
         default:
             Loggers.Bot.debug(`Unknown message type from main process: ${message.type}`);
     }
@@ -347,42 +351,6 @@ function startTemporaryFarm(channelId, channelTimer) {
     // Calculate remaining time
     const remainingTime = MAX_FARM_TIME_PER_CHANNEL - channelTimer.elapsed;
     const remainingMinutes = Math.round(remainingTime / 60000);
-
-    // Start emoji monitoring if configured
-    const config = configManager.getConfig();
-    if (config?.emojiMonitoringEmojis?.length > 0) {
-        // Use reaction_Id as the bot ID to monitor
-        const reaction_Id = '519287796549156864';
-        startEmojiMonitoring(channelId, reaction_Id, config.emojiMonitoringEmojis);
-        Loggers.Bot.info(`Emoji monitoring started for bot ${reaction_Id} in channel ${channelId}`);
-    }
-
-    // Set up timeout to stop farming
-    botState.activeTimedFarm = {
-        channelId: channelId,
-        startTime: Date.now(),
-        originalChannelIds: originalChannelIds,
-        originalChannelIndex: originalChannelIndex,
-        timeoutId: setTimeout(() => {
-            if (botState.activeTimedFarm.channelId === channelId) {
-                stopBot();
-                botState.isOwoEnabled = false;
-                channelTimer.elapsed = 0;
-
-                // Stop emoji monitoring
-                stopEmojiMonitoring();
-
-                // Restore original channel IDs
-                if (botState.activeTimedFarm.originalChannelIds) {
-                    botState.channelIds = botState.activeTimedFarm.originalChannelIds;
-                    botState.currentChannelIndex = botState.activeTimedFarm.originalChannelIndex || 0;
-                }
-
-                botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
-                botState.tempFarmChannel = null;
-            }
-        }, remainingTime)
-    };
 
     // Set temporary farm channel
     botState.tempFarmChannel = channelId;
@@ -700,6 +668,86 @@ function handleAddChannels(channelIdsString) {
 function handleClearChannels() {
     botState.channelIds = [];
     return 'Permanent channel list cleared successfully.';
+}
+
+/**
+ * Handle emoji monitoring command
+ *
+ * @param {Object} message - Command message
+ */
+function handleEmojiMonitoringCommand(message) {
+    const { action, emojis, interactionId } = message;
+
+    let resultMessage = '';
+
+    switch (action) {
+        case 'start':
+            resultMessage = handleStartEmojiMonitoring(emojis);
+            break;
+
+        case 'stop':
+            resultMessage = handleStopEmojiMonitoring();
+            break;
+
+        default:
+            resultMessage = 'Invalid action. Use "start" or "stop".';
+    }
+
+    // Send result back to main process
+    if (process.send) {
+        process.send({
+            type: 'komut_sonucu',
+            resultMessage,
+            interactionId
+        });
+    }
+}
+
+/**
+ * Handle starting emoji monitoring
+ *
+ * @param {string} emojis - Comma-separated list of emojis
+ * @returns {string} Result message
+ */
+function handleStartEmojiMonitoring(emojis) {
+    if (!emojis || emojis.trim().length === 0) {
+        return 'No emojis provided. Please provide emojis to monitor.';
+    }
+
+    // Parse emojis
+    const parsedEmojis = emojis
+        .split(',')
+        .map(emoji => emoji.trim())
+        .filter(emoji => emoji.length > 0);
+
+    if (parsedEmojis.length === 0) {
+        return 'No valid emojis provided.';
+    }
+
+    // Check if farming is active
+    if (!botState.isOwoEnabled || !botState.tempFarmChannel) {
+        return 'Please start farming in a channel first before enabling emoji monitoring.';
+    }
+
+    // Start emoji monitoring
+    const reaction_Id = '519287796549156864';
+    startEmojiMonitoring(botState.tempFarmChannel, reaction_Id, parsedEmojis);
+
+    return `Emoji monitoring started for ${parsedEmojis.length} emoji(s) in channel ${botState.tempFarmChannel}.`;
+}
+
+/**
+ * Handle stopping emoji monitoring
+ *
+ * @returns {string} Result message
+ */
+function handleStopEmojiMonitoring() {
+    if (!botState.emojiMonitoringEnabled) {
+        return 'Emoji monitoring is not currently active.';
+    }
+
+    stopEmojiMonitoring();
+    return 'Emoji monitoring stopped.';
 }
 
 // ============================================================================

@@ -24,8 +24,7 @@ const DEFAULT_CONFIG = {
     owo_ID: '408785106942164992',
     telegramBotToken: null,
     telegramChatId: null,
-    enableConsoleLog: false,
-    emojiMonitoringEmojis: []
+    enableConsoleLog: false
 };
 
 /**
@@ -108,8 +107,7 @@ class ConfigManager {
             owo_ID: this._parseOwoId(),
             telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || null,
             telegramChatId: process.env.TELEGRAM_CHAT_ID || null,
-            enableConsoleLog: this._parseBoolean(process.env.ENABLE_CONSOLE_LOG, false),
-            emojiMonitoringEmojis: this._parseEmojiMonitoringEmojis()
+            enableConsoleLog: this._parseBoolean(process.env.ENABLE_CONSOLE_LOG, false)
         };
     }
 
@@ -213,23 +211,6 @@ class ConfigManager {
         }
 
         return value === 'true' || value === '1' || value === 'yes';
-    }
-
-    /**
-     * Parse emoji monitoring emojis from environment variables
-     *
-     * @private
-     * @returns {string[]} Array of emojis to monitor
-     */
-    _parseEmojiMonitoringEmojis() {
-        if (!process.env.EMOJI_MONITORING_EMOJIS) {
-            return [];
-        }
-
-        return process.env.EMOJI_MONITORING_EMOJIS
-            .split(',')
-            .map(emoji => emoji.trim())
-            .filter(emoji => emoji.length > 0);
     }
 
     /**

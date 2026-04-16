@@ -227,6 +227,28 @@ const commands = [
         required: false
       }
     ]
+  },
+  {
+    name: 'emoji_monitoring',
+    description: 'Emoji monitoring\'i başlat veya durdur.',
+    options: [
+      {
+        name: 'action',
+        description: 'Yapılacak işlem',
+        type: ApplicationCommandOptionType.String,
+        required: true,
+        choices: [
+          { name: 'Start', value: 'start' },
+          { name: 'Stop', value: 'stop' }
+        ]
+      },
+      {
+        name: 'emojis',
+        description: 'İzlenecek emojiler (sadece Start için, virgülle ayırarak)',
+        type: ApplicationCommandOptionType.String,
+        required: false
+      }
+    ]
   }
 ];
 
@@ -460,6 +482,32 @@ client.on('interactionCreate', async interaction => {
         });
 
         await sendV2Reply(interaction, `### SETCH\n${resultMessage}`);
+      } else if (interaction.commandName === 'emoji_monitoring') {
+        const action = interaction.options.getString('action');
+        const emojis = interaction.options.getString('emojis');
+
+        if (process.send) {
+          process.send({
+            type: 'emoji_monitoring_command',
+            action: action,
+            emojis: emojis,
+            interactionId: interaction.id,
+            targetUserId: interaction.user.id
+          });
+        } else {
+          return await sendV2Reply(interaction, '### İşlem yapılamıyor.');
+        }
+
+        // Wait for response from selfbot
+        const { resultMessage } = await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            interactionHandlers.delete(interaction.id);
+            reject(new Error('Selfbot yanıt vermedi.'));
+          }, 15000);
+          interactionHandlers.set(interaction.id, resolve);
+        });
+
+        await sendV2Reply(interaction, `### EMOJI MONITORING\n${resultMessage}`);
       }
 
     } else if (interaction.isButton()) {

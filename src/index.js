@@ -303,7 +303,7 @@ function spawnNotifierProcess(botToken) {
  * @param {Object} message - Message from the notifier
  */
 function handleNotifierMessage(message) {
-    const forwardableTypes = ['komut_kullanildi', 'setch_command', 'channels_command'];
+    const forwardableTypes = ['komut_kullanildi', 'setch_command', 'channels_command', 'emoji_monitoring_command'];
     if (forwardableTypes.includes(message.type) && message.targetUserId) {
         const targetBot = selfbotProcesses.get(message.targetUserId);
 
