@@ -9,8 +9,9 @@
  */
 
 const { Loggers } = require('../utils/logger');
+const { GIVEAWAY } = require('../config/constants');
 
-const DELAY_MS = 5000;
+const DELAY_MS = GIVEAWAY.JOIN_DELAY;
 
 /**
  * Check if the bot has access to a channel
