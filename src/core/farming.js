@@ -14,7 +14,6 @@ const { sendTyping, sendMessage } = require('../services/discordService');
 const { getRandomInt, delay } = require('../utils/helpers');
 const { logError } = require('../utils/errorHandler');
 const { Loggers } = require('../utils/logger');
-const { FARMING, EMOJI_MONITORING } = require('../config/constants');
 
 // ============================================================================
 // CONSTANTS
@@ -30,11 +29,11 @@ const COMMANDS = {
 /** Delay ranges in milliseconds */
 const LOOP_DELAYS = {
     /** Delay between loop iterations */
-    ITERATION: FARMING.LOOP_ITERATION_DELAY,
+    ITERATION: { MIN: 200, MAX: 1000 },
     /** Delay after errors */
-    ERROR_RECOVERY: FARMING.ERROR_RECOVERY_DELAY,
+    ERROR_RECOVERY: 5000,
     /** Delay after critical errors */
-    CRITICAL_ERROR: FARMING.CRITICAL_ERROR_DELAY
+    CRITICAL_ERROR: 10000
 };
 
 // ============================================================================
@@ -314,7 +313,7 @@ async function cycleChannels(client) {
             if (botState.emojiMonitoringEnabled && botState.monitoredEmojis.length > 0) {
                 const newChannelId = getCurrentChannelId();
                 if (newChannelId && newChannelId !== botState.monitoredChannelId) {
-                    const reaction_Id = EMOJI_MONITORING.DEFAULT_REACTION_ID;
+                    const reaction_Id = '519287796549156864';
                     startEmojiMonitoring(newChannelId, reaction_Id, botState.monitoredEmojis);
                     Loggers.Farm.info(`Emoji monitoring updated to new channel: ${newChannelId}`);
                 }

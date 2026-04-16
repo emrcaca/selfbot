@@ -8,7 +8,6 @@
  */
 
 const dotenv = require('dotenv');
-const { DISCORD, VALIDATION } = require('./constants');
 
 // ============================================================================
 // CONSTANTS
@@ -22,7 +21,7 @@ const DEFAULT_CONFIG = {
     discordBotToken: null,
     CH_IDS: [],
     GIVEAWAY_CHANNEL_IDS: [],
-    owo_ID: DISCORD.OWO_BOT_ID,
+    owo_ID: '408785106942164992',
     telegramBotToken: null,
     telegramChatId: null,
     enableConsoleLog: false
@@ -31,17 +30,17 @@ const DEFAULT_CONFIG = {
 /**
  * Placeholder patterns that indicate configuration values need to be replaced
  */
-const PLACEHOLDER_PATTERNS = VALIDATION.PLACEHOLDER_PATTERNS;
+const PLACEHOLDER_PATTERNS = ['YOUR_', 'your_token_here', 'your_bot_token_here'];
 
 /**
  * Regular expression for validating Discord IDs (should be numeric)
  */
-const DISCORD_ID_REGEX = VALIDATION.DISCORD_ID_REGEX;
+const DISCORD_ID_REGEX = /^\d+$/;
 
 /**
  * Minimum length for a valid Discord token
  */
-const MIN_TOKEN_LENGTH = DISCORD.MIN_TOKEN_LENGTH;
+const MIN_TOKEN_LENGTH = 50;
 
 // ============================================================================
 // CONFIGURATION MANAGER CLASS

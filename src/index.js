@@ -15,7 +15,6 @@ const { handleUncaughtException, handleUnhandledRejection } = require('./utils/e
 const { clearAllTrackedTimeouts } = require('./services/discordService');
 const { Loggers } = require('./utils/logger');
 const { initializeConfig } = require('./core/state');
-const { PROCESS } = require('./config/constants');
 
 // ============================================================================
 // CONSTANTS
@@ -28,10 +27,10 @@ const BOT_SCRIPT = path.join(__dirname, 'process', 'worker.js');
 const NOTIFIER_SCRIPT = path.join(__dirname, 'process', 'notifier.js');
 
 /** Width of the ASCII art banner */
-const BANNER_WIDTH = PROCESS.BANNER_WIDTH;
+const BANNER_WIDTH = 45;
 
 /** Duration to keep interaction responses tracked (ms) */
-const INTERACTION_TRACK_DURATION = PROCESS.INTERACTION_TRACK_DURATION;
+const INTERACTION_TRACK_DURATION = 20000;
 
 // ============================================================================
 // STATE MANAGEMENT
