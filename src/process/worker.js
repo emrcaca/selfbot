@@ -10,11 +10,10 @@
 
 const { Client } = require('discord.js-selfbot-v13');
 const configManager = require('../config/manager');
-const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList, startEmojiMonitoring, stopEmojiMonitoring } = require('../core/state');
+const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList } = require('../core/state');
 const { owoLoop, whwbLoop, cycleChannels } = require('../core/farming');
 const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState } = require('../handlers/messageHandler');
 const { handleGiveawayMessage } = require('../handlers/giveawayHandler');
-const { handleEmojiMonitoring } = require('../handlers/emojiMonitorHandler');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('../services/discordService');
 const { Loggers } = require('../utils/logger');
@@ -116,14 +115,10 @@ client.on('messageCreate', async message => {
         await handleIncomingMessage(client, message);
         await handleCaptchaDM(client, message);
 
-        // Handle giveaway messages
         const config = configManager.getConfig();
         if (config?.GIVEAWAY_CHANNEL_IDS?.length > 0) {
-            await handleGiveawayMessage(message, config.GIVEAWAY_CHANNEL_IDS, client);
+            await handleGiveawayMessage(message, config.GIVEAWAY_CHANNEL_IDS);
         }
-
-        // Handle emoji monitoring
-        await handleEmojiMonitoring(client, message);
     } catch (error) {
         Loggers.Bot.error(`Error handling message: ${error.message}`);
     }
@@ -155,10 +150,6 @@ process.on('message', async (message) => {
 
         case 'setch_command':
             handleSetchCommand(message);
-            break;
-
-        case 'emoji_monitoring_command':
-            handleEmojiMonitoringCommand(message);
             break;
 
         default:
@@ -352,6 +343,30 @@ function startTemporaryFarm(channelId, channelTimer) {
     const remainingTime = MAX_FARM_TIME_PER_CHANNEL - channelTimer.elapsed;
     const remainingMinutes = Math.round(remainingTime / 60000);
 
+    // Set up timeout to stop farming
+    botState.activeTimedFarm = {
+        channelId: channelId,
+        startTime: Date.now(),
+        originalChannelIds: originalChannelIds,
+        originalChannelIndex: originalChannelIndex,
+        timeoutId: setTimeout(() => {
+            if (botState.activeTimedFarm.channelId === channelId) {
+                stopBot();
+                botState.isOwoEnabled = false;
+                channelTimer.elapsed = 0;
+
+                // Restore original channel IDs
+                if (botState.activeTimedFarm.originalChannelIds) {
+                    botState.channelIds = botState.activeTimedFarm.originalChannelIds;
+                    botState.currentChannelIndex = botState.activeTimedFarm.originalChannelIndex || 0;
+                }
+
+                botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
+                botState.tempFarmChannel = null;
+            }
+        }, remainingTime)
+    };
+
     // Set temporary farm channel
     botState.tempFarmChannel = channelId;
 
@@ -373,9 +388,6 @@ function stopTemporaryFarm(_channelId, channelTimer) {
     if (botState.activeTimedFarm.timeoutId) {
         clearTimeout(botState.activeTimedFarm.timeoutId);
     }
-
-    // Stop emoji monitoring
-    stopEmojiMonitoring();
 
     // Update elapsed time
     const startTime = botState.activeTimedFarm.startTime;
@@ -466,23 +478,10 @@ async function handlePermanentFarm(userId) {
         botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
         botState.tempFarmChannel = null;
 
-        // Start emoji monitoring if configured
-        if (botState.emojiMonitoringEnabled) {
-            // Get the first channel from the list for initial monitoring
-            const firstChannelId = channelList[0];
-            if (firstChannelId) {
-                const reaction_Id = '519287796549156864';
-                startEmojiMonitoring(firstChannelId, reaction_Id, botState.monitoredEmojis);
-                Loggers.Bot.info(`Emoji monitoring started for permanent farming in channel ${firstChannelId}`);
-            }
-        }
-
         resumeBot();
         return `Farming enabled for permanent channels (${channelSource} list with ${channelList.length} channel(s)). Will start shortly.`;
     } else {
         stopBot();
-        // Stop emoji monitoring
-        stopEmojiMonitoring();
         // Restore original channel list
         botState.channelIds = originalChannelIds;
         botState.currentChannelIndex = originalChannelIndex;
@@ -681,86 +680,6 @@ function handleAddChannels(channelIdsString) {
 function handleClearChannels() {
     botState.channelIds = [];
     return 'Permanent channel list cleared successfully.';
-}
-
-/**
- * Handle emoji monitoring command
- *
- * @param {Object} message - Command message
- */
-function handleEmojiMonitoringCommand(message) {
-    const { action, emojis, interactionId } = message;
-
-    let resultMessage = '';
-
-    switch (action) {
-        case 'start':
-            resultMessage = handleStartEmojiMonitoring(emojis);
-            break;
-
-        case 'stop':
-            resultMessage = handleStopEmojiMonitoring();
-            break;
-
-        default:
-            resultMessage = 'Invalid action. Use "start" or "stop".';
-    }
-
-    // Send result back to main process
-    if (process.send) {
-        process.send({
-            type: 'komut_sonucu',
-            resultMessage,
-            interactionId
-        });
-    }
-}
-
-/**
- * Handle starting emoji monitoring
- *
- * @param {string} emojis - Comma-separated list of emojis
- * @returns {string} Result message
- */
-function handleStartEmojiMonitoring(emojis) {
-    if (!emojis || emojis.trim().length === 0) {
-        return 'No emojis provided. Please provide emojis to monitor.';
-    }
-
-    // Parse emojis
-    const parsedEmojis = emojis
-        .split(',')
-        .map(emoji => emoji.trim())
-        .filter(emoji => emoji.length > 0);
-
-    if (parsedEmojis.length === 0) {
-        return 'No valid emojis provided.';
-    }
-
-    // Check if farming is active
-    if (!botState.isOwoEnabled || !botState.tempFarmChannel) {
-        return 'Please start farming in a channel first before enabling emoji monitoring.';
-    }
-
-    // Start emoji monitoring
-    const reaction_Id = '519287796549156864';
-    startEmojiMonitoring(botState.tempFarmChannel, reaction_Id, parsedEmojis);
-
-    return `Emoji monitoring started for ${parsedEmojis.length} emoji(s) in channel ${botState.tempFarmChannel}.`;
-}
-
-/**
- * Handle stopping emoji monitoring
- *
- * @returns {string} Result message
- */
-function handleStopEmojiMonitoring() {
-    if (!botState.emojiMonitoringEnabled) {
-        return 'Emoji monitoring is not currently active.';
-    }
-
-    stopEmojiMonitoring();
-    return 'Emoji monitoring stopped.';
 }
 
 // ============================================================================

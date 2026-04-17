@@ -135,10 +135,6 @@ function initializeConfig(loadedConfig) {
  * @property {boolean} monitoring - Whether channel monitoring is enabled
  * @property {boolean} enableConsoleLog - Whether console logging is enabled
  * @property {Map} userChannelLists - User-specific channel lists for permanent farming
- * @property {boolean} emojiMonitoringEnabled - Whether emoji monitoring is enabled
- * @property {string|null} monitoredBotId - Bot ID to monitor for emojis
- * @property {string[]} monitoredEmojis - List of emojis to monitor for
- * @property {string|null} monitoredChannelId - Channel ID where monitoring is active
  */
 const botState = {
     isRunning: false,
@@ -157,11 +153,7 @@ const botState = {
     tempFarmChannel: null,
     monitoring: false,
     enableConsoleLog: config.enableConsoleLog || false,
-    userChannelLists: new Map(), // userId -> channelIds[]
-    emojiMonitoringEnabled: false,
-    monitoredBotId: null,
-    monitoredEmojis: [],
-    monitoredChannelId: null
+    userChannelLists: new Map() // userId -> channelIds[]
 };
 
 // ============================================================================
@@ -344,47 +336,6 @@ function removeUserChannelList(userId) {
 }
 
 /**
- * Start emoji monitoring for a specific bot in a channel
- *
- * @param {string} channelId - Channel ID to monitor
- * @param {string} botId - Bot ID to monitor messages from
- * @param {string[]} emojis - List of emojis to look for
- */
-function startEmojiMonitoring(channelId, botId, emojis) {
-    botState.emojiMonitoringEnabled = true;
-    botState.monitoredChannelId = channelId;
-    botState.monitoredBotId = botId;
-    botState.monitoredEmojis = emojis;
-
-    if (botState.enableConsoleLog) {
-        console.log(`[STATE] Emoji monitoring started in channel ${channelId} for bot ${botId}`);
-    }
-}
-
-/**
- * Stop emoji monitoring
- */
-function stopEmojiMonitoring() {
-    botState.emojiMonitoringEnabled = false;
-    botState.monitoredChannelId = null;
-    botState.monitoredBotId = null;
-    botState.monitoredEmojis = [];
-
-    if (botState.enableConsoleLog) {
-        console.log('[STATE] Emoji monitoring stopped');
-    }
-}
-
-/**
- * Check if emoji monitoring is active
- *
- * @returns {boolean} Whether emoji monitoring is enabled
- */
-function isEmojiMonitoringEnabled() {
-    return botState.emojiMonitoringEnabled;
-}
-
-/**
  * Get the current bot state as a plain object
  *
  * Useful for logging or debugging purposes.
@@ -402,10 +353,7 @@ function getBotStateSnapshot() {
         currentChannelIndex: botState.currentChannelIndex,
         channelCount: botState.channelIds.length,
         tempFarmChannel: botState.tempFarmChannel,
-        monitoring: botState.monitoring,
-        emojiMonitoringEnabled: botState.emojiMonitoringEnabled,
-        monitoredChannelId: botState.monitoredChannelId,
-        monitoredBotId: botState.monitoredBotId
+        monitoring: botState.monitoring
     };
 }
 
@@ -431,8 +379,5 @@ module.exports = {
     shouldRunLoop,
     initializeConfig,
     resetBotState,
-    getBotStateSnapshot,
-    startEmojiMonitoring,
-    stopEmojiMonitoring,
-    isEmojiMonitoringEnabled
+    getBotStateSnapshot
 };

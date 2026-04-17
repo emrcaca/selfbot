@@ -11,18 +11,14 @@
 
 const { PROBABILITIES } = require('../core/state');
 const { getRandomInt, delay } = require('../utils/helpers');
-const { globalResourceManager } = require('../utils/managers/resourceManager');
-const { globalChannelCache } = require('../utils/cache/channelCache');
-const { CACHE, FARMING } = require('../config/constants');
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-// Using constants from config/constants.js
-const CACHE_TTL = CACHE.CHANNEL_TTL;
-const MESSAGE_QUEUE_DELAY = CACHE.MESSAGE_QUEUE_DELAY;
-const MESSAGE_QUEUE_INITIAL_DELAY = CACHE.MESSAGE_QUEUE_INITIAL_DELAY;
+const CACHE_TTL = 5 * 60 * 1000;
+const MESSAGE_QUEUE_DELAY = 1100;
+const MESSAGE_QUEUE_INITIAL_DELAY = 100;
 
 // ============================================================================
 // MESSAGE QUEUE
@@ -57,18 +53,40 @@ function addToMessageQueue(channelId, fn) {
 // CACHING
 // ============================================================================
 
+const channelCache = new Map();
+
+function cleanExpiredCache() {
+    const now = Date.now();
+    for (const [key, value] of channelCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+            channelCache.delete(key);
+        }
+    }
+}
+
 async function getChannel(client, channelId) {
     if (!channelId) return null;
 
+    const cached = channelCache.get(channelId);
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+        return cached.channel;
+    }
+
+    cleanExpiredCache();
+
     try {
-        return await globalChannelCache.getOrFetchChannel(channelId, client);
+        const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId);
+        if (channel) {
+            channelCache.set(channelId, { channel, timestamp: Date.now() });
+        }
+        return channel;
     } catch {
         return null;
     }
 }
 
 function clearAllCaches() {
-    globalChannelCache.clearChannels();
+    channelCache.clear();
 }
 
 // ============================================================================
@@ -104,10 +122,7 @@ async function sendMessage(client, channelId, messageContent) {
     });
 }
 
-function clearAllTrackedTimeouts() {
-    // Clear all tracked resources using the resource manager
-    globalResourceManager.clearAll();
-}
+function clearAllTrackedTimeouts() {}
 
 // ============================================================================
 // EXPORTS
