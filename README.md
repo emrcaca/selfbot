@@ -34,12 +34,17 @@ Projenin çalışması için sisteminizde Node.js 18 veya üzeri bir sürümün 
 
 ## Konfigürasyon
 
-Proje kök dizininde bulunan `.env` dosyası üzerinden yapılandırılır. Aşağıdaki parametrelerin tanımlanması zorunludur:
+Proje kök dizininde bulunan `.env` dosyası üzerinden yapılandırılır. Kullanılabilir parametreler şunlardır:
 
 - `DISCORD_BOT_TOKEN`: Kontrol panelini yönetecek olan ana botun tokeni.
 - `TOKENS`: İşlemleri yapacak selfbot hesaplarının tokenları (virgülle ayrılmış).
-- `CHANNEL_IDS`: Varsayilan farm kanallari.
-- `OWO_PREFIX`: Kullanılacak komut ön eki (Örneğin: Owo).
+- `CHANNEL_IDS`: Otomatik farm işlemlerinin yapılacağı kanal ID'leri (virgülle ayrılmış).
+- `GIVEAWAY_CHANNEL_IDS`: Çekiliş takibi yapılacak kanal ID'leri (virgülle ayrılmış).
+- `TELEGRAM_BOT_TOKEN`: Bildirimlerin iletileceği Telegram bot tokeni (Opsiyonel).
+- `TELEGRAM_CHAT_ID`: Bildirimlerin gönderileceği Telegram sohbet ID'si (Opsiyonel).
+- `MESSAGE_MIN_DELAY`: Mesajlar arası minimum bekleme süresi (milisaniye cinsinden).
+- `MESSAGE_MAX_DELAY`: Mesajlar arası maksimum bekleme süresi (milisaniye cinsinden).
+- `ENABLE_CONSOLE_LOG`: Konsol loglarının aktiflik durumu (true/false).
 
 ## Komutlar
 
