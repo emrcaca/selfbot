@@ -13,7 +13,6 @@ const configManager = require('../config/manager');
 const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList } = require('../core/state');
 const { owoLoop, whwbLoop, cycleChannels } = require('../core/farming');
 const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState } = require('../handlers/messageHandler');
-const { handleGiveawayMessage } = require('../handlers/giveawayHandler');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { clearAllTrackedTimeouts } = require('../services/discordService');
 const { Loggers } = require('../utils/logger');
@@ -33,7 +32,10 @@ const DISCORD_CHANNEL_ID_REGEX = /^\d+$/;
 // ============================================================================
 
 // Fix for self-signed certificate error
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+if (process.env.NODE_ENV === 'development') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    Loggers.Bot.warn('SSL verification is disabled in development mode.');
+}
 
 // Set up global error handlers
 process.on('uncaughtException', handleUncaughtException);
@@ -114,11 +116,6 @@ client.on('messageCreate', async message => {
     try {
         await handleIncomingMessage(client, message);
         await handleCaptchaDM(client, message);
-
-        const config = configManager.getConfig();
-        if (config?.GIVEAWAY_CHANNEL_IDS?.length > 0) {
-            await handleGiveawayMessage(message, config.GIVEAWAY_CHANNEL_IDS);
-        }
     } catch (error) {
         Loggers.Bot.error(`Error handling message: ${error.message}`);
     }

@@ -20,8 +20,7 @@ const DEFAULT_CONFIG = {
     tokens: [],
     discordBotToken: null,
     CH_IDS: [],
-    GIVEAWAY_CHANNEL_IDS: [],
-    owo_ID: '408785106942164992',
+    owo_Id: '408785106942164992',
     telegramBotToken: null,
     telegramChatId: null,
     enableConsoleLog: false
@@ -103,8 +102,7 @@ class ConfigManager {
             tokens: this._parseTokens(),
             discordBotToken: process.env.DISCORD_BOT_TOKEN || null,
             CH_IDS: this._parseChannelIds(),
-            GIVEAWAY_CHANNEL_IDS: this._parseGiveawayChannelIds(),
-            owo_ID: this._parseOwoId(),
+            owo_Id: this._parseOwoId(),
             telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || null,
             telegramChatId: process.env.TELEGRAM_CHAT_ID || null,
             enableConsoleLog: this._parseBoolean(process.env.ENABLE_CONSOLE_LOG, false)
@@ -159,17 +157,6 @@ class ConfigManager {
             .filter(id => id.length > 0);
     }
 
-    _parseGiveawayChannelIds() {
-        if (!process.env.GIVEAWAY_CHANNEL_IDS) {
-            return [];
-        }
-
-        return process.env.GIVEAWAY_CHANNEL_IDS
-            .split(',')
-            .map(id => id.trim())
-            .filter(id => id.length > 0);
-    }
-
     /**
      * Parse OWO bot ID from environment variables
      *
@@ -186,12 +173,12 @@ class ConfigManager {
             if (this.config?.enableConsoleLog !== false) {
                 console.warn(
                     `[CONFIG] OWO_ID "${owoId}" is not a valid numeric string. ` +
-                    `Using default ID instead: ${DEFAULT_CONFIG.owo_ID}`
+                    `Using default ID instead: ${DEFAULT_CONFIG.owo_Id}`
                 );
             }
-            owoId = DEFAULT_CONFIG.owo_ID;
+            owoId = DEFAULT_CONFIG.owo_Id;
         } else {
-            owoId = owoId || DEFAULT_CONFIG.owo_ID;
+            owoId = owoId || DEFAULT_CONFIG.owo_Id;
         }
 
         return owoId;
@@ -327,9 +314,9 @@ class ConfigManager {
      * @param {string[]} errors - Array to collect validation errors
      */
     _validateOwoId(config, errors) {
-        if (!config.owo_ID || typeof config.owo_ID !== 'string') {
+        if (!config.owo_Id || typeof config.owo_Id !== 'string') {
             errors.push('OWO_ID must be a non-empty string');
-        } else if (!DISCORD_ID_REGEX.test(config.owo_ID)) {
+        } else if (!DISCORD_ID_REGEX.test(config.owo_Id)) {
             errors.push('OWO_ID must be numeric');
         }
     }

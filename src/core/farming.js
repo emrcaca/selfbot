@@ -126,6 +126,21 @@ async function performRandomSleep() {
 // ============================================================================
 
 /**
+ * Gecikme süresini hesaplar (yazma ve mesaj gecikmelerini düşer)
+ * 
+ * @param {Object} delayRange - Ana gecikme aralığı {MIN, MAX}
+ * @returns {number} Ayarlanmış gecikme süresi
+ */
+function calculateAdjustedDelay(delayRange) {
+    const baseDelay = getRandomInt(delayRange.MIN, delayRange.MAX);
+    const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
+    const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
+    
+    // En az 0 olacak şekilde hesapla
+    return Math.max(0, baseDelay - typingDelay - messageDelay);
+}
+
+/**
  * Main loop for OWO farming
  *
  * Continuously sends the OWO command to the current farming channel.
@@ -173,11 +188,7 @@ async function owoLoop(client) {
             } finally {
                 botState.isProcessingOwo = false;
 
-                // Calculate adjusted delay (subtract typing and message delays from OWO delay)
-                const owoDelay = getRandomInt(DELAYS.OWO.MIN, DELAYS.OWO.MAX);
-                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
-                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
-                const adjustedDelay = Math.max(0, owoDelay - typingDelay - messageDelay);
+                const adjustedDelay = calculateAdjustedDelay(DELAYS.OWO);
                 await delay(adjustedDelay);
             }
 
@@ -247,11 +258,7 @@ async function whwbLoop(client) {
             } finally {
                 botState.isProcessingWhWb = false;
 
-                // Calculate adjusted delay (subtract typing and message delays from WHWB delay)
-                const whwbDelay = getRandomInt(DELAYS.WHWB.MIN, DELAYS.WHWB.MAX);
-                const typingDelay = getRandomInt(DELAYS.TYPING.MIN, DELAYS.TYPING.MAX);
-                const messageDelay = getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX);
-                const adjustedDelay = Math.max(0, whwbDelay - typingDelay - messageDelay);
+                const adjustedDelay = calculateAdjustedDelay(DELAYS.WHWB);
                 await delay(adjustedDelay);
             }
 

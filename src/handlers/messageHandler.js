@@ -52,7 +52,7 @@ const sentCaptchaNotifications = new Map();
  */
 function getOwoBotId() {
     const config = configManager.getConfig();
-    return config ? config.owo_ID : '408785106942164992';
+    return config ? config.owo_Id : '408785106942164992';
 }
 
 /**
