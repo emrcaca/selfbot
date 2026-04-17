@@ -35,16 +35,16 @@ const CAPTCHA_KEYWORDS = [
  */
 const DELAYS = {
     /** Delay range for sending typing indicator */
-    TYPING: { MIN: 200, MAX: 1000 },
+    TYPING: { MIN: 200, MAX: 700 },
 
     /** Delay range between sending messages */
     MESSAGE: { MIN: 200, MAX: 500 },
 
     /** Delay range between OWO commands */
-    OWO: { MIN: 10500, MAX: 12500 },
+    OWO: { MIN: 11000, MAX: 13000 },
 
     /** Delay range between WHWB commands */
-    WHWB: { MIN: 15500, MAX: 17500 },
+    WHWB: { MIN: 16000, MAX: 18000 },
 
     /** Duration range for bot sleep mode */
     SLEEP: { MIN: 30000, MAX: 60000 },
