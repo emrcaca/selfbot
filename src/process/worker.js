@@ -212,6 +212,12 @@ async function handleCommand(message) {
                 channelId: activeChannelId,
                 tempFarmChannel: botState.tempFarmChannel
             });
+
+            // Also send status update for OWO toggling (to update button states correctly)
+            process.send({
+                type: 'owo_status_update',
+                isOwoEnabled: botState.isOwoEnabled
+            });
         }
 
     } catch (error) {
@@ -359,6 +365,25 @@ function startTemporaryFarm(channelId, channelTimer) {
 
                 botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
                 botState.tempFarmChannel = null;
+
+                // Calculate current state and send farm status update
+                // This ensures notifier has the correct activeChannelId
+                const currentIsChannelFarming = botState.tempFarmChannel !== null;
+                const currentIsPermanentFarming = botState.isOwoEnabled && !botState.tempFarmChannel;
+
+                process.send({
+                    type: 'farm_status_update',
+                    userId: client.user.id,
+                    isChannelFarming: currentIsChannelFarming,
+                    isPermanentFarming: currentIsPermanentFarming,
+                    channelId: botState.tempFarmChannel,
+                    tempFarmChannel: botState.tempFarmChannel
+                });
+
+                process.send({
+                    type: 'owo_status_update',
+                    isOwoEnabled: botState.isOwoEnabled
+                });
             }
         }, remainingTime)
     };
@@ -401,9 +426,23 @@ function stopTemporaryFarm(_channelId, channelTimer) {
     botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
     botState.tempFarmChannel = null;
 
-    // Stop bot
-    stopBot();
-    botState.isOwoEnabled = false;
+    // Calculate current state and send farm status update
+    const currentIsChannelFarming = botState.tempFarmChannel !== null;
+    const currentIsPermanentFarming = botState.isOwoEnabled && !botState.tempFarmChannel;
+
+    process.send({
+        type: 'farm_status_update',
+        userId: client.user.id,
+        isChannelFarming: currentIsChannelFarming,
+        isPermanentFarming: currentIsPermanentFarming,
+        channelId: botState.tempFarmChannel,
+        tempFarmChannel: botState.tempFarmChannel
+    });
+
+    process.send({
+        type: 'owo_status_update',
+        isOwoEnabled: botState.isOwoEnabled
+    });
 
     return 'Farm stopped.';
 }
@@ -442,8 +481,25 @@ async function handlePermanentFarm(userId) {
         botState.currentChannelIndex = 0;
     }
 
+    // Calculate current state before toggling
+    const currentIsChannelFarming = botState.tempFarmChannel !== null;
+    const currentIsPermanentFarming = botState.isOwoEnabled && !botState.tempFarmChannel;
+
     // Toggle farming
     toggleBooleanState('isOwoEnabled', 'Owo Farm');
+
+    // Send farm status update after toggling (channel list changed)
+    const newIsChannelFarming = botState.tempFarmChannel !== null;
+    const newIsPermanentFarming = botState.isOwoEnabled && !botState.tempFarmChannel;
+
+    process.send({
+        type: 'farm_status_update',
+        userId: client.user.id,
+        isChannelFarming: newIsChannelFarming,
+        isPermanentFarming: newIsPermanentFarming,
+        channelId: botState.tempFarmChannel,
+        tempFarmChannel: botState.tempFarmChannel
+    });
 
     if (botState.isOwoEnabled) {
         // Check if selfbot can send messages to any channel
@@ -474,13 +530,41 @@ async function handlePermanentFarm(userId) {
         botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
         botState.tempFarmChannel = null;
 
+        // Send farm status update because channel list changed
+        const currentIsChannelFarming = botState.tempFarmChannel !== null;
+        const currentIsPermanentFarming = botState.isOwoEnabled && !botState.tempFarmChannel;
+
+        process.send({
+            type: 'farm_status_update',
+            userId: client.user.id,
+            isChannelFarming: currentIsChannelFarming,
+            isPermanentFarming: currentIsPermanentFarming,
+            channelId: botState.tempFarmChannel,
+            tempFarmChannel: botState.tempFarmChannel
+        });
+
         resumeBot();
         return `Farming enabled for permanent channels (${channelSource} list with ${channelList.length} channel(s)). Will start shortly.`;
     } else {
         stopBot();
+
         // Restore original channel list
         botState.channelIds = originalChannelIds;
         botState.currentChannelIndex = originalChannelIndex;
+
+        // Send farm status update because channel list changed
+        const currentIsChannelFarming = botState.tempFarmChannel !== null;
+        const currentIsPermanentFarming = botState.isOwoEnabled && !botState.tempFarmChannel;
+
+        process.send({
+            type: 'farm_status_update',
+            userId: client.user.id,
+            isChannelFarming: currentIsChannelFarming,
+            isPermanentFarming: currentIsPermanentFarming,
+            channelId: botState.tempFarmChannel,
+            tempFarmChannel: botState.tempFarmChannel
+        });
+
         return 'Farming disabled.';
     }
 }
