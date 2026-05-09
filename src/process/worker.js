@@ -359,23 +359,6 @@ function startTemporaryFarm(channelId, channelTimer) {
 
                 botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
                 botState.tempFarmChannel = null;
-
-                // Notify notifier to update buttons
-                if (process.send) {
-                    process.send({
-                        type: 'farm_status_update',
-                        userId: client.user.id,
-                        isChannelFarming: false,
-                        isPermanentFarming: false,
-                        channelId: null,
-                        tempFarmChannel: null
-                    });
-                    process.send({
-                        type: 'temp_farm_timeout',
-                        userId: client.user.id,
-                        channelId: channelId
-                    });
-                }
             }
         }, remainingTime)
     };

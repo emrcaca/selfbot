@@ -165,23 +165,6 @@ process.on('message', (message) => {
       conditionalError('❌ Bot.js: User fetch error:', err);
     });
   }
-	else if (message.type === 'temp_farm_timeout') {
-	  const { userId, channelId } = message;
-	  conditionalLog('⏰ Bot.js: Temporary farm timeout for user:', userId);
-	  // Send DM notification to user that time is up
-	  client.users.fetch(userId).then(user => {
-	    user.createDM().then(dmChannel => {
-	      const alertText = new TextDisplayBuilder().setContent(
-	        `⏰ **10 dakika doldu!**\n\nBu kanaldaki farm süreniz doldu. Tekrar farm yapmak için `/selfbot farm` komutunu kullanabilirsiniz.`
-	      );
-	      const separator = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
-	      dmChannel.send({
-	        components: [alertText, separator],
-	        flags: MessageFlags.IsComponentsV2
-	      }).catch(err => conditionalError('❌ Bot.js: Timeout DM error:', err));
-	    }).catch(err => conditionalError('❌ Bot.js: DM channel creation error:', err));
-	  }).catch(err => conditionalError('❌ Bot.js: User fetch error:', err));
-	}
 });
 
 const commands = [
