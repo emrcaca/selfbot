@@ -1,0 +1,10 @@
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "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",
+    "ANTHROPIC_BASE_URL": "https://nim.emrxxxx.workers.dev",
+    "API_TIMEOUT_MS": "3000000",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-ai/deepseek-v4-flash",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-ai/deepseek-v4-flash",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-ai/deepseek-v4-flash"
+  }
+}
