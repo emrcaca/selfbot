@@ -1,0 +1,38 @@
+name: Run Selfbot
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    env:
+      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      TOKENS: ${{ secrets.TOKENS }}
+      CHANNEL_IDS: ${{ secrets.CHANNEL_IDS }}
+      GIVEAWAY_CHANNEL_IDS: ${{ secrets.GIVEAWAY_CHANNEL_IDS }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DEFAULT_PRESENCE: invisible
+      ENABLE_CONSOLE_LOG: false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --silent
+
+      - name: Run Bot (keep alive 6 hours)
+        run: |
+          node src/index.js &
+          sleep 21300
