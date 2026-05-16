@@ -347,10 +347,9 @@ function startTemporaryFarm(channelId, channelTimer) {
         originalChannelIndex: originalChannelIndex,
         timeoutId: setTimeout(() => {
             if (botState.activeTimedFarm.channelId === channelId) {
-                // Set state before stopBot so owo_status_update has correct value
+                stopBot();
                 botState.isOwoEnabled = false;
                 channelTimer.elapsed = 0;
-                stopBot();
 
                 // Restore original channel IDs
                 if (botState.activeTimedFarm.originalChannelIds) {
@@ -360,17 +359,6 @@ function startTemporaryFarm(channelId, channelTimer) {
 
                 botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
                 botState.tempFarmChannel = null;
-
-                // Notify notifier process to update button states
-                if (process.send) {
-                    process.send({
-                        type: 'farm_status_update',
-                        userId: client.user.id,
-                        isChannelFarming: false,
-                        isPermanentFarming: false,
-                        channelId: null
-                    });
-                }
             }
         }, remainingTime)
     };
