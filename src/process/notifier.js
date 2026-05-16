@@ -355,7 +355,31 @@ client.on('messageCreate', async message => {
     } catch (error) {
       conditionalError('❌ Bot.js: !sil komutu hatası:', error);
     }
+  } else if (interaction.commandName === 'ask') {
+  const question = interaction.options.getString('soru');
+
+  if (process.send) {
+    process.send({
+      type: 'komut_kullanildi',
+      command: 'ask',
+      question: question,
+      interactionId: interaction.id,
+      targetUserId: interaction.user.id
+    });
+  } else {
+    return await sendV2Reply(interaction, '### İşlem yapılamıyor.');
   }
+
+  const { resultMessage } = await new Promise((resolve, reject) => {
+    setTimeout(() => {
+      interactionHandlers.delete(interaction.id);
+      reject(new Error('Selfbot yanıt vermedi.'));
+    }, 15000);
+    interactionHandlers.set(interaction.id, resolve);
+  });
+
+  await sendV2Reply(interaction, resultMessage);
+}
 });
 
 let isOwoEnabled = false;
