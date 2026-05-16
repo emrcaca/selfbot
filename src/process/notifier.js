@@ -224,6 +224,18 @@ const commands = [
         description: 'Kanal ID\'leri (sadece Set için, virgülle ayırarak)',
         type: ApplicationCommandOptionType.String,
         required: false
+      },
+      {
+        name: 'ask',
+        description: 'AI botuna soru sor (hafızalı)',
+        options: [
+          {
+            name: 'soru',
+            description: 'Sormak istediğin şey',
+            type: ApplicationCommandOptionType.String,
+            required: true
+          }
+        ]
       }
     ]
   }
