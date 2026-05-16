@@ -206,18 +206,6 @@ const commands = [
     ]
   },
   {
-    name: 'ask',
-    description: 'AI botuna soru sor (hafızalı)',
-    options: [
-      {
-        name: 'soru',
-        description: 'Sormak istediğin şey',
-        type: ApplicationCommandOptionType.String,
-        required: true
-      }
-    ]
-  },
-  {
     name: 'setch',
     description: 'Kalıcı farm için geçici kanal listesi ayarla.',
     options: [
