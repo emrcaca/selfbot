@@ -206,6 +206,18 @@ const commands = [
     ]
   },
   {
+    name: 'ask',
+    description: 'AI botuna soru sor (hafızalı)',
+    options: [
+      {
+        name: 'soru',
+        description: 'Sormak istediğin şey',
+        type: ApplicationCommandOptionType.String,
+        required: true
+      }
+    ]
+  },
+  {
     name: 'setch',
     description: 'Kalıcı farm için geçici kanal listesi ayarla.',
     options: [
@@ -224,18 +236,6 @@ const commands = [
         description: 'Kanal ID\'leri (sadece Set için, virgülle ayırarak)',
         type: ApplicationCommandOptionType.String,
         required: false
-      },
-      {
-        name: 'ask',
-        description: 'AI botuna soru sor (hafızalı)',
-        options: [
-          {
-            name: 'soru',
-            description: 'Sormak istediğin şey',
-            type: ApplicationCommandOptionType.String,
-            required: true
-          }
-        ]
       }
     ]
   }
@@ -355,31 +355,7 @@ client.on('messageCreate', async message => {
     } catch (error) {
       conditionalError('❌ Bot.js: !sil komutu hatası:', error);
     }
-  } else if (interaction.commandName === 'ask') {
-  const question = interaction.options.getString('soru');
-
-  if (process.send) {
-    process.send({
-      type: 'komut_kullanildi',
-      command: 'ask',
-      question: question,
-      interactionId: interaction.id,
-      targetUserId: interaction.user.id
-    });
-  } else {
-    return await sendV2Reply(interaction, '### İşlem yapılamıyor.');
   }
-
-  const { resultMessage } = await new Promise((resolve, reject) => {
-    setTimeout(() => {
-      interactionHandlers.delete(interaction.id);
-      reject(new Error('Selfbot yanıt vermedi.'));
-    }, 15000);
-    interactionHandlers.set(interaction.id, resolve);
-  });
-
-  await sendV2Reply(interaction, resultMessage);
-}
 });
 
 let isOwoEnabled = false;

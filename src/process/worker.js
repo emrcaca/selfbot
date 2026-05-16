@@ -166,10 +166,7 @@ async function handleCommand(message) {
             case 'farm':
                 resultMessage = await handleFarmCommand(message);
                 break;
-            case 'ask':
-              resultMessage = await handleAskCommand(message);
-              break;
-                
+
             default:
                 resultMessage = 'Unknown command';
         }
