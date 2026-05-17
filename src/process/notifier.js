@@ -206,18 +206,6 @@ const commands = [
     ]
   },
   {
-    name: 'ask',
-    description: 'AI botuna soru sor (hafızalı)',
-    options: [
-      {
-        name: 'soru',
-        description: 'Sormak istediğin şey',
-        type: ApplicationCommandOptionType.String,
-        required: true
-      }
-    ]
-  },
-  {
     name: 'setch',
     description: 'Kalıcı farm için geçici kanal listesi ayarla.',
     options: [
@@ -471,65 +459,6 @@ client.on('interactionCreate', async interaction => {
         });
 
         await sendV2Reply(interaction, `### SETCH\n${resultMessage}`);
-      } else if (interaction.commandName === 'ask') {
-        const soru = interaction.options.getString('soru');
-
-        // Load conversation history
-        if (!global.askHistory) global.askHistory = {};
-        const userId = interaction.user.id;
-        if (!global.askHistory[userId]) global.askHistory[userId] = [];
-
-        const userHistory = global.askHistory[userId];
-
-        const SYSTEM_PROMPT = `Sen deneyimli bir yazılım geliştirici ve teknik asistansın.
-
-Yeteneklerin:
-- Türkçe ve İngilizce doğal dilde sohbet
-- Kod yazma, debug, açıklama (JS, TS, Python, Go, Rust, C#, Java, SQL)
-- Matematik, mantık, analiz
-- Metin özetleme, çeviri, içerik üretimi
-
-Yanıt Kuralları:
-1. Yanıtlar 1800 karakteri ASLA geçmemelidir
-2. Giriş/sonuç selamlamalarını atla, direkt konuya gir
-3. Discord Markdown kullan: \`\`\` kod, - liste, **kalın** vurgu
-4. Başlık (#) SADECE gerçekten uzun ve çok bölümlü teknik yanıtlarda kullan
-5. Basit sohbet/kısa yanıtlarda başlık, liste, kod bloku gibi formatlama KULLANMA — düz metin yaz
-6. Birden fazla konu varsa --- satırı ile bölümle
-7. Teknik sorularda önce kısa analiz yap, sonra çözüm sun
-8. Kod örneklerinde dil belirt (\`\`\`typescript gibi)
-9. Soruyu kısa ve net yanıtla, gereksiz uzatma yapma`;
-
-        const messages = [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...userHistory.slice(-20),
-          { role: "user", content: soru }
-        ];
-
-        try {
-          const aiRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${process.env.CF_API_TOKEN}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ messages, max_tokens: 1200 })
-          });
-          const data = await aiRes.json();
-          let aiResponse = data.result?.response || data.result || "AI yanıt üretemedi.";
-
-          // Save to history
-          userHistory.push({ role: "user", content: soru });
-          userHistory.push({ role: "assistant", content: aiResponse });
-          if (userHistory.length > 30) {
-            global.askHistory[userId] = userHistory.slice(-20);
-          }
-
-          await sendV2Reply(interaction, aiResponse);
-        } catch (error) {
-          conditionalError('❌ Bot.js: AI çağrı hatası:', error);
-          await sendV2Reply(interaction, 'AI hatası: ' + error.message);
-        }
       }
 
     } else if (interaction.isButton()) {
