@@ -13,7 +13,8 @@ const {
   SeparatorBuilder,
   SeparatorSpacingSize,
   ContainerBuilder,
-  DefaultWebSocketManagerOptions
+  DefaultWebSocketManagerOptions,
+  SectionBuilder
 } = require('discord.js');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const configManager = require('../config/manager');
@@ -279,40 +280,56 @@ async function sendV2Reply(interaction, message, components = []) {
   });
 }
 
-function buildFarmEmbedContent(isChannelFarming, isPermanentFarming) {
+function buildFarmEmbedContent() {
   return '### Farm Sistemi Kontrol Paneli\n'
-    + '**Bu kanalda farm işlemini yönetmek için aşağıdaki butonları kullanabilirsiniz:**\n\n'
-    + '• **Geçici Farm**: Sadece bu kanalda geçici olarak farm yapar\n'
-    + '• **Kalıcı Farm**: Kayıtlı tüm kanallarda sürekli farm yapar\n\n'
-    + '*Farm durumunuzu aşağıdaki butonlarla kontrol edebilirsiniz.*';
+    + '**Bu kanalda farm işlemini yönetmek için sağdaki butonları kullanabilirsiniz:**';
 }
 
 function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
-  const temporaryButtonLabel = isChannelFarming ? 'Geçici Farmı Durdur' : 'Geçici Farm Başlat';
+  const temporaryButtonLabel = isChannelFarming ? 'Durdur' : 'Başlat';
   const temporaryButtonStyle = isChannelFarming ? ButtonStyle.Danger : ButtonStyle.Success;
 
-  const permanentButtonLabel = isPermanentFarming ? 'Kalıcı Farmı Durdur' : 'Kalıcı Farm Başlat';
+  const permanentButtonLabel = isPermanentFarming ? 'Durdur' : 'Başlat';
   const permanentButtonStyle = isPermanentFarming ? ButtonStyle.Danger : ButtonStyle.Success;
 
-  const farmButtonsRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('farm_this_channel')
-      .setLabel(temporaryButtonLabel)
-      .setStyle(temporaryButtonStyle),
-    new ButtonBuilder()
-      .setCustomId('farm_permanent_channels')
-      .setLabel(permanentButtonLabel)
-      .setStyle(permanentButtonStyle)
+  const titleText = new TextDisplayBuilder().setContent(
+    '### Farm Sistemi Kontrol Paneli\n' +
+    '**Bu kanalda farm işlemini yönetmek için aşağıdaki butonları kullanabilirsiniz:**'
   );
 
-  const embedContent = buildFarmEmbedContent();
-  const textDisplay = new TextDisplayBuilder().setContent(embedContent);
+  const temporaryButton = new ButtonBuilder()
+    .setCustomId('farm_this_channel')
+    .setLabel(temporaryButtonLabel)
+    .setStyle(temporaryButtonStyle);
+
+  const permanentButton = new ButtonBuilder()
+    .setCustomId('farm_permanent_channels')
+    .setLabel(permanentButtonLabel)
+    .setStyle(permanentButtonStyle);
+
+  const tempSection = new SectionBuilder()
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('• **Geçici Farm**: Sadece bu kanalda geçici olarak farm yapar')
+    )
+    .setButtonAccessory(temporaryButton);
+
+  const permSection = new SectionBuilder()
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent('• **Kalıcı Farm**: Kayıtlı tüm kanallarda sürekli farm yapar')
+    )
+    .setButtonAccessory(permanentButton);
+
+  const footerText = new TextDisplayBuilder().setContent(
+    '*Farm durumunuzu sağdaki butonlarla kontrol edebilirsiniz.*'
+  );
 
   return [
     new ContainerBuilder()
-      .addTextDisplayComponents(textDisplay)
+      .addTextDisplayComponents(titleText)
       .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-      .addActionRowComponents(farmButtonsRow)
+      .addSectionComponents(tempSection, permSection)
+      .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
+      .addTextDisplayComponents(footerText)
   ];
 }
 
