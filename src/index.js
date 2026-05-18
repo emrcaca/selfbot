@@ -117,6 +117,17 @@ function spawnSelfbotProcess(token, index) {
         Loggers.Main.error(`Selfbot (Index: ${index}) stderr: ${data.toString()}`);
     });
 
+    // Handle stdout from the child process
+    childProcess.stdout.on('data', (data) => {
+        const lines = data.toString().split('\n');
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed) {
+                Loggers.Main.info(`Selfbot (Index: ${index}): ${trimmed}`);
+            }
+        });
+    });
+
     // Handle messages from the child process
     childProcess.on('message', (message) => {
         handleWorkerMessage(childProcess, message, index);
@@ -287,6 +298,17 @@ function spawnNotifierProcess(botToken) {
     // Handle stderr from the notifier
     notifierProcess.stderr.on('data', (data) => {
         Loggers.Main.error(`Notifier (bot.js) stderr: ${data.toString()}`);
+    });
+
+    // Handle stdout from the notifier
+    notifierProcess.stdout.on('data', (data) => {
+        const lines = data.toString().split('\n');
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed) {
+                Loggers.Main.info(`Notifier (bot.js): ${trimmed}`);
+            }
+        });
     });
 
     // Handle notifier process exit

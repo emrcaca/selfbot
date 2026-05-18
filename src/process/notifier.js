@@ -17,6 +17,7 @@ const {
 } = require('discord.js');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const configManager = require('../config/manager');
+const axios = require('axios');
 
 // Get console log setting from config
 let enableConsoleLog = false;
@@ -48,7 +49,9 @@ const conditionalError = (...args) => {
 };
 
 // Fix for self-signed certificate error
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+if (process.env.NODE_ENV === 'development') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 DefaultWebSocketManagerOptions.identifyProperties.browser = 'Discord iOS';
 
@@ -224,6 +227,18 @@ const commands = [
         description: 'Kanal ID\'leri (sadece Set için, virgülle ayırarak)',
         type: ApplicationCommandOptionType.String,
         required: false
+      }
+    ]
+  },
+  {
+    name: 'ask',
+    description: 'AI botuna soru sor (hafızalı)',
+    options: [
+      {
+        name: 'soru',
+        description: 'Sormak istediğin şey',
+        type: ApplicationCommandOptionType.String,
+        required: true
       }
     ]
   }
@@ -459,6 +474,60 @@ client.on('interactionCreate', async interaction => {
         });
 
         await sendV2Reply(interaction, `### SETCH\n${resultMessage}`);
+      } else if (interaction.commandName === 'ask') {
+        const question = interaction.options.getString('soru');
+
+        try {
+          const botToken = process.env.BOT_TOKEN;
+          const payload = {
+            type: 2, // APPLICATION_COMMAND
+            token: interaction.token,
+            id: interaction.id,
+            application_id: client.user.id,
+            channel_id: interaction.channelId,
+            guild_id: interaction.guildId,
+            user: {
+              id: interaction.user.id,
+              username: interaction.user.username,
+              discriminator: interaction.user.discriminator,
+              avatar: interaction.user.avatar
+            },
+            data: {
+              id: interaction.commandId,
+              name: 'ask',
+              type: 1,
+              options: [
+                {
+                  name: 'soru',
+                  type: 3,
+                  value: question
+                }
+              ]
+            }
+          };
+
+          const response = await axios.post('https://bot.emrxxxx.workers.dev/interactions', payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Proxy-Auth': botToken,
+              'User-Agent': 'Discord-Bot-Proxy'
+            },
+            timeout: 10000
+          });
+
+          if (response.data && response.data.data && response.data.data.content) {
+            await sendV2Reply(interaction, response.data.data.content);
+          } else if (response.data && response.data.content) {
+            await sendV2Reply(interaction, response.data.content);
+          } else if (typeof response.data === 'string') {
+            await sendV2Reply(interaction, response.data);
+          } else {
+            await sendV2Reply(interaction, '### Cloudflare Worker\'dan geçersiz yanıt alındı.');
+          }
+        } catch (error) {
+          conditionalError('❌ Bot.js: Cloudflare Worker yönlendirme hatası:', error.message);
+          await sendV2Reply(interaction, `### Cloudflare Worker ile iletişim kurulamadı.\nHata: ${error.message}`);
+        }
       }
 
     } else if (interaction.isButton()) {
@@ -597,9 +666,14 @@ async function handleCaptchaNotification(msgData) {
           const stored = captchaDmMessages.get(userId);
           if (stored && stored.messageId === messageId) {
             conditionalLog('🗑️ Bot.js: Timeout ile DM mesajı siliniyor...');
-            await dmChannel.messages.delete(messageId);
+            try {
+              const msg = await dmChannel.messages.fetch(messageId);
+              if (msg) await msg.delete();
+              conditionalLog('✅ Bot.js: DM mesajı timeout ile silindi');
+            } catch (err) {
+              conditionalLog('⚠️ Bot.js: DM mesajı zaten silinmiş veya bulunamadı');
+            }
             captchaDmMessages.delete(userId);
-            conditionalLog('✅ Bot.js: DM mesajı timeout ile silindi');
           } else {
             conditionalLog('ℹ️ Bot.js: DM mesajı zaten silinmiş veya bulunamadı');
           }
@@ -649,8 +723,13 @@ async function handleCaptchaSolved(userId) {
 
     // Delete the message
     conditionalLog('🗑️ Bot.js: DM mesajı siliniyor, messageId:', stored.messageId);
-    await dmChannel.messages.delete(stored.messageId);
-    conditionalLog('✅ Bot.js: CAPTCHA DM mesajı başarıyla silindi');
+    try {
+      const msg = await dmChannel.messages.fetch(stored.messageId);
+      if (msg) await msg.delete();
+      conditionalLog('✅ Bot.js: CAPTCHA DM mesajı başarıyla silindi');
+    } catch (err) {
+      conditionalLog('⚠️ Bot.js: DM mesajı zaten silinmiş veya bulunamadı');
+    }
   } catch (error) {
     conditionalError('❌ Bot.js: CAPTCHA çözüldü DM silme hatası:', error);
     conditionalError('❌ Bot.js: Error details:', {
