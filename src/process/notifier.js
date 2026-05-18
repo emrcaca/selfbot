@@ -515,6 +515,11 @@ client.on('interactionCreate', async interaction => {
             timeout: 10000
           });
 
+          if (response.status === 204 || (response.status === 200 && !response.data)) {
+            // Success! The Cloudflare Worker has already edited the reply directly via Discord API.
+            return;
+          }
+
           if (response.data && response.data.data && response.data.data.content) {
             await sendV2Reply(interaction, response.data.data.content);
           } else if (response.data && response.data.content) {
