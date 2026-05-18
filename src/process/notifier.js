@@ -75,6 +75,7 @@ const interactionHandlers = new Map();
 const authorizedUserIds = new Set();
 const captchaDmMessages = new Map();
 const userFarmStates = new Map(); // Kullanıcı başına farm durumunu takip et
+const activeFarmPanels = new Map(); // Kullanıcı başına aktif farm panel mesajını takip et
 
 process.on('message', (message) => {
   conditionalLog('📨 Bot.js: Process mesajı alındı:', message.type);
@@ -136,6 +137,18 @@ process.on('message', (message) => {
       activeChannelId: message.channelId || null
     });
     conditionalLog('📨 Bot.js: Farm status update received for user:', message.userId);
+
+    // Update active panel message if it exists
+    const panelMessage = activeFarmPanels.get(message.userId);
+    if (panelMessage) {
+      const updatedComponents = generateFarmControlComponents(newIsChannelFarming, newIsPermanentFarming);
+      panelMessage.edit({
+        components: updatedComponents,
+        flags: MessageFlags.IsComponentsV2
+      }).catch(err => {
+        conditionalError('❌ Bot.js: Failed to auto-update farm panel message:', err.message);
+      });
+    }
   }
   else if (message.type === 'channel_monitor_alert') {
     client.users.fetch(message.userId).then(user => {
@@ -408,10 +421,11 @@ client.on('interactionCreate', async interaction => {
 
           const farmComponents = generateFarmControlComponents(isFarmingInThisChannel, userState.isPermanentFarming);
 
-          await interaction.editReply({
+          const panelMsg = await interaction.editReply({
             components: farmComponents,
             flags: MessageFlags.IsComponentsV2
           });
+          activeFarmPanels.set(interaction.user.id, panelMsg);
           return;
         } else if (commandType === 'alert') {
           const confirmText = new TextDisplayBuilder().setContent('Alert komutu başarıyla kullanıldı.');
@@ -615,10 +629,11 @@ client.on('interactionCreate', async interaction => {
 
         const updatedComponents = generateFarmControlComponents(newIsChannelFarming, isPermanentFarming);
 
-        await interaction.editReply({
+        const panelMsg = await interaction.editReply({
           components: updatedComponents,
           flags: MessageFlags.IsComponentsV2
         });
+        activeFarmPanels.set(interaction.user.id, panelMsg);
       }
     }
   } catch (error) {
@@ -649,13 +664,20 @@ async function handleCaptchaNotification(msgData) {
     conditionalLog('✅ Bot.js: DM kanalı oluşturuldu:', dmChannel.id);
 
     let sentMessage = null;
-    const captchaContent = `⚠️ **CAPTCHA Tespit Edildi**\n\nCAPTCHA tespit edildi! Lütfen CAPTCHA'yı manuel olarak çözün.\n\n**Sunucu:** ${guildName || 'Bilinmiyor'}\n**Kanal:** ${channelName || 'Bilinmiyor'}`;
+    const guildLinkPart = guildId || '@me';
+    const messageLink = `https://discord.com/channels/${guildLinkPart}/${channelId}/${messageId}`;
+
+    const captchaContent = `## Captcha tespit edildi!\n` +
+                           `Sunucu: **${guildName || 'Bilinmiyor'}**\n` +
+                           `Kanal: **#${channelName || 'Bilinmiyor'}** (<#${channelId}>)\n` +
+                           `Mesaj Linki: [URL](${messageLink})`;
 
     const textDisplay = new TextDisplayBuilder().setContent(captchaContent);
-    const separator = new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small);
+    const container = new ContainerBuilder()
+      .addTextDisplayComponents(textDisplay);
 
     sentMessage = await dmChannel.send({
-      components: [textDisplay, separator],
+      components: [container],
       flags: MessageFlags.IsComponentsV2
     });
     conditionalLog('✅ Bot.js: CAPTCHA bildirimi gönderildi');

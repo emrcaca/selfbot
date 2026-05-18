@@ -351,7 +351,6 @@ function startTemporaryFarm(channelId, channelTimer) {
                 botState.isOwoEnabled = false;
                 channelTimer.elapsed = 0;
 
-                // Restore original channel IDs
                 if (botState.activeTimedFarm.originalChannelIds) {
                     botState.channelIds = botState.activeTimedFarm.originalChannelIds;
                     botState.currentChannelIndex = botState.activeTimedFarm.originalChannelIndex || 0;
@@ -359,6 +358,22 @@ function startTemporaryFarm(channelId, channelTimer) {
 
                 botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
                 botState.tempFarmChannel = null;
+
+                if (process.send) {
+                    process.send({
+                        type: 'owo_status_update',
+                        isOwoEnabled: false
+                    });
+
+                    process.send({
+                        type: 'farm_status_update',
+                        userId: client.user.id,
+                        isChannelFarming: false,
+                        isPermanentFarming: false,
+                        channelId: null,
+                        tempFarmChannel: null
+                    });
+                }
             }
         }, remainingTime)
     };

@@ -186,6 +186,10 @@ function handleWorkerMessage(childProcess, message, index) {
             handleOwoStatusUpdate(message);
             break;
 
+        case 'farm_status_update':
+            handleFarmStatusUpdate(message);
+            break;
+
         default:
             Loggers.Main.debug(`Unknown message type from worker: ${message.type}`);
     }
@@ -269,6 +273,17 @@ function handleCaptchaSolved(message) {
  * @param {Object} message - OWO status update message
  */
 function handleOwoStatusUpdate(message) {
+    if (!notifierProcess) return;
+
+    // Forward to notifier process to update button states
+    notifierProcess.send(message);
+}
+
+/**
+ * Handles farm status update messages from workers
+ * @param {Object} message - Farm status update message
+ */
+function handleFarmStatusUpdate(message) {
     if (!notifierProcess) return;
 
     // Forward to notifier process to update button states
