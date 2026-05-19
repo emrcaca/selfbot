@@ -7,8 +7,11 @@ Bu proje, birden fazla Discord hesabı üzerinde otomatik işlemler gerçekleşt
 - Çoklu Hesap Desteği: Her token için ayrı bir worker süreci başlatılarak yük dengelemesi ve izolasyon sağlanır.
 - Merkezi Kontrol: İşlemler, standart bir Discord botu üzerinden slash komutları ile yönetilebilir.
 - Otomatik Farm Sistemi: Belirlenen kanallarda geçici veya kalıcı farm işlemleri yapılabilir.
-- Captcha Bildirimi: Selfbot hesaplarında captcha tespiti yapıldığında kontrol botu üzerinden DM yoluyla bildirim gönderilir.
+- Captcha Bildirimi: Selfbot hesaplarında captcha tespiti yapıldığında kontrol botu üzerinden DM yoluyla modern Bordered V2 Container tasarımı ve doğrudan mesaj linki içeren bildirim gönderilir.
 - Kanal İzleme: Belirlenen kanallardaki mesajlar takip edilerek kritik durumlarda uyarı mekanizması çalıştırılır.
+- İnsansı Yazma Simülasyonu: Karakter uzunluğuna göre dinamik olarak hesaplanan ve tamamen değişken tuş vuruşu süreleriyle çalışan yazma göstergesi tetiklenir.
+- Hazırda Bekleme Simülasyonu: Cooldown süresi dolmadan hemen önce yazmaya başlayarak gerçekçi bir bekleme taklidi yapılır.
+- Mikro Duraklamalar: Farm esnasında belirli aralıklarla ve anlık iptal edilebilir şekilde rastgele insansı duraklamalar gerçekleştirilir.
 
 ## Mimari Yapı
 
@@ -27,7 +30,7 @@ Projenin çalışması için sisteminizde Node.js 18 veya üzeri bir sürümün 
    npm install
    ```
 3. `.env` dosyasını oluşturun ve gerekli alanları doldurun (aşağıdaki konfigürasyon bölümüne bakınız).
-4. Uygulamayi baslatin:
+4. Uygulamayı başlatın:
    ```bash
    npm start
    ```
@@ -42,23 +45,22 @@ Proje kök dizininde bulunan `.env` dosyası üzerinden yapılandırılır. Kull
 - `GIVEAWAY_CHANNEL_IDS`: Çekiliş takibi yapılacak kanal ID'leri (virgülle ayrılmış).
 - `TELEGRAM_BOT_TOKEN`: Bildirimlerin iletileceği Telegram bot tokeni (Opsiyonel).
 - `TELEGRAM_CHAT_ID`: Bildirimlerin gönderileceği Telegram sohbet ID'si (Opsiyonel).
-- `MESSAGE_MIN_DELAY`: Mesajlar arası minimum bekleme süresi (milisaniye cinsinden).
-- `MESSAGE_MAX_DELAY`: Mesajlar arası maksimum bekleme süresi (milisaniye cinsinden).
 - `ENABLE_CONSOLE_LOG`: Konsol loglarının aktiflik durumu (true/false).
 
 ## Komutlar
 
 Kontrol botu üzerinden aşağıdaki slash komutları kullanılabilir:
 
-- `/selfbot farm`: Farm kontrol panelini açar.
+- `/selfbot farm`: Farm kontrol panelini açar. Sağa yaslanmış butonlar ile kolay yönetim sağlar.
+- `/ask`: Yapay zeka asistanına soru sormak için kullanılır.
 - `/channels add/clear`: Kalıcı kanal listesini yönetir.
 - `/setch set/default`: Geçici kanal listesi ayarlarını yapar.
 - `!sil`: DM kanalındaki bot mesajlarını temizlemek için kullanılır.
 
 ## Güvenlik ve Uyarı
 
-Bu yazılım sadece eğitim ve kişisel kullanım amaçlıdır. Discord Terim ve Koşulları'na (ToS) aykırı kullanımlardan doğabilecek hesap kapatılma gibi sorumluluklar tamamen kullanıcıya aittir.
+Bu yazılım sadece eğitim ve kişisel kullanım amaçlıdır. Discord Terim ve Koşulları'na (ToS) aykırı kullanımlardan doğabilecek hesap kapatılma gibi sorumluluklar tamamen kullanıcıya aittir. Gelişmiş insansı davranış simülasyonları ban riskini minimize etmekle birlikte, riskin tamamen sıfırlandığı garanti edilemez.
 
 ## Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakabilirsiniz.
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](./LICENCE) dosyasına bakabilirsiniz.
