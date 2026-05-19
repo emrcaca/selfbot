@@ -10,10 +10,17 @@
 
 const { botState, DELAYS, PROBABILITIES } = require('./state');
 const { shouldRunLoop } = require('./state');
-const { sendTyping, sendMessage } = require('../services/discordService');
+const { sendTyping, sendMessage, getChannel } = require('../services/discordService');
 const { getRandomInt, delay } = require('../utils/helpers');
 const { logError } = require('../utils/errorHandler');
 const { Loggers } = require('../utils/logger');
+
+// ============================================================================
+// STATE TRACKERS (HUMANIZER)
+// ============================================================================
+
+let alreadyTypedOwo = false;
+let alreadyTypedWhwb = false;
 
 // ============================================================================
 // CONSTANTS
@@ -172,8 +179,12 @@ async function owoLoop(client) {
             botState.isProcessingOwo = true;
 
             try {
-                // Send typing indicator (randomly based on probability)
-                await sendTyping(client, channelId);
+                // Send typing indicator if not already done early in the cooldown
+                if (!alreadyTypedOwo) {
+                    await sendTyping(client, channelId, COMMANDS.OWO);
+                } else {
+                    alreadyTypedOwo = false; // Reset
+                }
 
                 // Send OWO command
                 await sendMessage(client, channelId, COMMANDS.OWO);
@@ -189,7 +200,7 @@ async function owoLoop(client) {
                 botState.isProcessingOwo = false;
 
                 const adjustedDelay = calculateAdjustedDelay(DELAYS.OWO);
-                await delay(adjustedDelay);
+                alreadyTypedOwo = await performFarmingCooldownDelay(client, channelId, COMMANDS.OWO, adjustedDelay);
             }
 
         } catch (error) {
@@ -231,8 +242,12 @@ async function whwbLoop(client) {
             botState.isProcessingWhWb = true;
 
             try {
-                // Send typing indicator
-                await sendTyping(client, channelId);
+                // Send typing indicator if not already done early in the cooldown
+                if (!alreadyTypedWhwb) {
+                    await sendTyping(client, channelId, COMMANDS.WH);
+                } else {
+                    alreadyTypedWhwb = false; // Reset
+                }
 
                 // Send WH command
                 const whSent = await sendMessage(client, channelId, COMMANDS.WH);
@@ -242,7 +257,7 @@ async function whwbLoop(client) {
                     await delay(getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX));
 
                     // Send typing indicator before WB
-                    await sendTyping(client, channelId);
+                    await sendTyping(client, channelId, COMMANDS.WB);
 
                     // Send WB command
                     await sendMessage(client, channelId, COMMANDS.WB);
@@ -259,7 +274,7 @@ async function whwbLoop(client) {
                 botState.isProcessingWhWb = false;
 
                 const adjustedDelay = calculateAdjustedDelay(DELAYS.WHWB);
-                await delay(adjustedDelay);
+                alreadyTypedWhwb = await performFarmingCooldownDelay(client, channelId, COMMANDS.WH, adjustedDelay);
             }
 
         } catch (error) {
@@ -387,6 +402,65 @@ async function microPauseLoop(client) {
             Loggers.Farm.error(`Error in microPauseLoop: ${error.message}`);
         }
     }
+}
+
+/**
+ * Metot, bir sonraki komuttan önceki cooldown süresini bekler.
+ * %25 ihtimalle, bekleme süresinin son 2-4 saniyesinde "yazıyor..." durumunu başlatır,
+ * böylece bot sanki elinde komut hazır şekilde cooldown'un bitmesini bekliyormuş gibi görünür.
+ * 
+ * Bu bekleme işlemi 1 saniyelik adımlarla yapılır, böylece bot durdurulursa bekleme anında kesilir.
+ */
+async function performFarmingCooldownDelay(client, channelId, nextCommand, totalDelay) {
+    const READY_WAIT_PROBABILITY = 0.25; // %25 ihtimalle hazırda beklesin
+
+    const isReadyWait = Math.random() < READY_WAIT_PROBABILITY && totalDelay > 5000;
+    
+    let silentDelay = totalDelay;
+    let typingDelay = 0;
+    let typingStarted = false;
+
+    if (isReadyWait) {
+        const earlyTypingTime = getRandomInt(2000, 4000);
+        silentDelay = Math.max(1000, totalDelay - earlyTypingTime);
+        typingDelay = totalDelay - silentDelay;
+    }
+
+    const step = 1000;
+    let elapsed = 0;
+
+    // 1. Aşama: Sessiz bekleme
+    while (elapsed < silentDelay) {
+        if (!botState.isRunning || !botState.isOwoEnabled || botState.captchaDetected) {
+            return false;
+        }
+        await delay(Math.min(step, silentDelay - elapsed));
+        elapsed += step;
+    }
+
+    // 2. Aşama: Eğer hazırda bekleyeceksek yazmayı başlat
+    if (isReadyWait && botState.isRunning && botState.isOwoEnabled && !botState.captchaDetected) {
+        const channel = await getChannel(client, channelId);
+        if (channel?.isText() && channel.type !== 'GUILD_FORUM') {
+            try {
+                await channel.sendTyping();
+                typingStarted = true;
+                Loggers.Farm.info(`[HUMANIZER] Cooldown bitimi beklenirken erken yazıyor durumu tetiklendi (Kalan süre: ${Math.round(typingDelay / 1000)}s)`);
+            } catch {}
+        }
+    }
+
+    // 3. Aşama: Kalan süreyi bekle (yazarak veya normal)
+    let elapsedTyping = 0;
+    while (elapsedTyping < typingDelay) {
+        if (!botState.isRunning || !botState.isOwoEnabled || botState.captchaDetected) {
+            return false;
+        }
+        await delay(Math.min(step, typingDelay - elapsedTyping));
+        elapsedTyping += step;
+    }
+
+    return typingStarted;
 }
 
 // ============================================================================

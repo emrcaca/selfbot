@@ -93,14 +93,34 @@ function clearAllCaches() {
 // DISCORD INTERACTIONS
 // ============================================================================
 
-async function sendTyping(client, channelId) {
+async function sendTyping(client, channelId, messageContent = '') {
     if (Math.random() >= PROBABILITIES.TYPING) return;
 
     const channel = await getChannel(client, channelId);
     if (channel?.isText() && channel.type !== 'GUILD_FORUM') {
         try {
             await channel.sendTyping();
-            await delay(getRandomInt(200, 1000));
+            
+            // Eğer içerik belirtilmemişse varsayılan rastgele bekleme kullan
+            if (!messageContent) {
+                await delay(getRandomInt(200, 1000));
+                return;
+            }
+
+            // Karakter uzunluğuna göre bekleme süresi hesaplama
+            const charCount = messageContent.length;
+            
+            // Her karakter için rastgele bir yazma hızı (80ms - 150ms arası)
+            let totalTypingTime = 0;
+            for (let i = 0; i < charCount; i++) {
+                totalTypingTime += getRandomInt(80, 150);
+            }
+
+            // "Enter" tuşuna basma reaksiyon süresi (150ms - 350ms arası rastgele ek gecikme)
+            const reactionTime = getRandomInt(150, 350);
+            
+            const finalDelay = totalTypingTime + reactionTime;
+            await delay(finalDelay);
         } catch {}
     }
 }
