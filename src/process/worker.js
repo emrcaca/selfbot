@@ -11,7 +11,7 @@
 const { Client } = require('discord.js-selfbot-v13');
 const configManager = require('../config/manager');
 const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList } = require('../core/state');
-const { owoLoop, whwbLoop, cycleChannels } = require('../core/farming');
+const { owoLoop, whwbLoop, cycleChannels, microPauseLoop } = require('../core/farming');
 const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState } = require('../handlers/messageHandler');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const { Loggers } = require('../utils/logger');
@@ -101,6 +101,7 @@ client.on('ready', async () => {
     owoLoop(client);
     whwbLoop(client);
     cycleChannels(client);
+    microPauseLoop(client);
 
     // Resume bot if no CAPTCHA detected
     if (!botState.captchaDetected) {

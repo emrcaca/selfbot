@@ -323,6 +323,56 @@ async function cycleChannels(client) {
     }
 }
 
+/**
+ * Background loop that checks every 10 seconds.
+ * With a very low probability, it triggers a micro-pause (sleep)
+ * for a random duration between 30 and 90 seconds.
+ * 
+ * @param {Client} client - Discord client instance
+ * @returns {Promise<void>}
+ */
+async function microPauseLoop(client) {
+    Loggers.Farm.info('Starting Micro Pause background check loop');
+
+    // 10 saniyede bir kontrol et
+    const CHECK_INTERVAL = 10000;
+    
+    // Mikro duraklama olasılığı (%2.5 olasılık)
+    const MICRO_PAUSE_PROBABILITY = 0.025; 
+
+    // Duraklama süresi sınırları (30 saniye ile 90 saniye arası)
+    const PAUSE_DURATION = { MIN: 30000, MAX: 90000 };
+
+    while (true) {
+        try {
+            await delay(CHECK_INTERVAL);
+
+            // Bot çalışıyor olmalı, farm aktif olmalı, halihazırda uyumuyor veya captcha almamış olmalı
+            if (botState.isRunning && botState.isOwoEnabled && !botState.isSleeping && !botState.captchaDetected) {
+                
+                // Çok düşük ihtimal kontrolü
+                if (Math.random() < MICRO_PAUSE_PROBABILITY) {
+                    const pauseTime = getRandomInt(PAUSE_DURATION.MIN, PAUSE_DURATION.MAX);
+                    const pauseTimeSeconds = Math.round(pauseTime / 1000);
+
+                    Loggers.Farm.info(`[MICRO-PAUSE] Farm 10 saniyelik kontrol sonucu rastgele olarak ${pauseTimeSeconds}s duraklatıldı.`);
+                    
+                    botState.isSleeping = true;
+
+                    try {
+                        await delay(pauseTime);
+                    } finally {
+                        botState.isSleeping = false;
+                        Loggers.Farm.info('[MICRO-PAUSE] Farm duraklaması sona erdi, devam ediliyor.');
+                    }
+                }
+            }
+        } catch (error) {
+            Loggers.Farm.error(`Error in microPauseLoop: ${error.message}`);
+        }
+    }
+}
+
 // ============================================================================
 // EXPORTS
 // ============================================================================
@@ -332,6 +382,7 @@ module.exports = {
     owoLoop,
     whwbLoop,
     cycleChannels,
+    microPauseLoop,
 
     // Channel management
     getCurrentChannelId,
