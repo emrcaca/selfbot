@@ -30,9 +30,11 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install --silent
+        run: npm ci
 
-      - name: Run Bot (keep alive 6 hours)
+      - name: Run Bot with Auto-Restart (Max 5h 55m)
         run: |
-          node src/index.js &
-          sleep 21300
+          timeout 21300s bash -c 'until node src/index.js; do
+            echo "Bot durdu veya çöktü. 5 saniye içinde yeniden başlatılıyor..." >&2
+            sleep 5
+          done' || true
