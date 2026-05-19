@@ -359,11 +359,27 @@ async function microPauseLoop(client) {
                     
                     botState.isSleeping = true;
 
+                    const step = 1000; // 1 saniyelik adımlarla bekle
+                    let elapsed = 0;
+                    let cancelled = false;
+
                     try {
-                        await delay(pauseTime);
+                        while (elapsed < pauseTime) {
+                            await delay(step);
+                            elapsed += step;
+                            
+                            // Eğer bu esnada kullanıcı farmı durdurduysa duraklamayı anında iptal et
+                            if (!botState.isRunning || !botState.isOwoEnabled || botState.captchaDetected) {
+                                cancelled = true;
+                                Loggers.Farm.info('[MICRO-PAUSE] Farm durdurulduğu veya CAPTCHA tespit edildiği için aktif mikro duraklama iptal edildi.');
+                                break;
+                            }
+                        }
                     } finally {
                         botState.isSleeping = false;
-                        Loggers.Farm.info('[MICRO-PAUSE] Farm duraklaması sona erdi, devam ediliyor.');
+                        if (!cancelled && botState.isRunning && botState.isOwoEnabled && !botState.captchaDetected) {
+                            Loggers.Farm.info('[MICRO-PAUSE] Farm duraklaması sona erdi, devam ediliyor.');
+                        }
                     }
                 }
             }
