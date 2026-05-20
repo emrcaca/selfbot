@@ -280,8 +280,7 @@ async function sendV2Reply(interaction, message, components = []) {
 }
 
 function buildFarmEmbedContent() {
-  return '### Farm Sistemi Kontrol Paneli\n'
-    + '**Bu kanalda farm işlemini yönetmek için sağdaki butonları kullanabilirsiniz:**';
+  return '### Farm Kontrol';
 }
 
 function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
@@ -291,10 +290,7 @@ function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
   const permanentButtonLabel = isPermanentFarming ? 'Durdur' : 'Başlat';
   const permanentButtonStyle = isPermanentFarming ? ButtonStyle.Danger : ButtonStyle.Success;
 
-  const titleText = new TextDisplayBuilder().setContent(
-    '### Farm Sistemi Kontrol Paneli\n' +
-    '**Bu kanalda farm işlemini yönetmek için aşağıdaki butonları kullanabilirsiniz:**'
-  );
+  const titleText = new TextDisplayBuilder().setContent('### Farm Kontrol');
 
   const temporaryButton = new ButtonBuilder()
     .setCustomId('farm_this_channel')
@@ -308,19 +304,17 @@ function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
 
   const tempSection = new SectionBuilder()
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('• **Geçici Farm**: Sadece bu kanalda geçici olarak farm yapar')
+      new TextDisplayBuilder().setContent('Geçici')
     )
     .setButtonAccessory(temporaryButton);
 
   const permSection = new SectionBuilder()
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('• **Kalıcı Farm**: Kayıtlı tüm kanallarda sürekli farm yapar')
+      new TextDisplayBuilder().setContent('Kalıcı')
     )
     .setButtonAccessory(permanentButton);
 
-  const footerText = new TextDisplayBuilder().setContent(
-    '*Farm durumunuzu sağdaki butonlarla kontrol edebilirsiniz.*'
-  );
+  const footerText = new TextDisplayBuilder().setContent('Durum: butonlardan yönet.');
 
   return [
     new ContainerBuilder()
