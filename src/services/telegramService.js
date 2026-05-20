@@ -6,7 +6,7 @@
 
 const axios = require('axios');
 const configManager = require('../config/manager');
-const { conditionalLog } = require('../utils/helpers');
+const { Loggers } = require('../utils/logger');
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org/bot';
 const CAPTCHA_URL = 'https://owobot.com/captcha';
@@ -32,7 +32,7 @@ function getTelegramConfig() {
 async function sendTelegramMessage(message, options = {}) {
     const config = getTelegramConfig();
     if (!config) {
-        conditionalLog('Telegram not configured, skipping notification');
+        Loggers.Webhook.debug('Telegram not configured, skipping notification');
         return false;
     }
 
@@ -48,7 +48,7 @@ async function sendTelegramMessage(message, options = {}) {
         );
         return response.data && response.data.ok;
     } catch (error) {
-        conditionalLog('Failed to send Telegram message:', error.message);
+        Loggers.Webhook.warn('Failed to send Telegram message', error.message);
         return false;
     }
 }

@@ -153,7 +153,8 @@ const botState = {
     tempFarmChannel: null,
     monitoring: false,
     enableConsoleLog: config.enableConsoleLog || false,
-    userChannelLists: new Map() // userId -> channelIds[]
+    userChannelLists: new Map(), // userId -> channelIds[]
+    selfUserId: null
 };
 
 // ============================================================================
@@ -179,6 +180,7 @@ function stopBot(sendStatusUpdate = true) {
     if (sendStatusUpdate && process.send) {
         process.send({
             type: 'owo_status_update',
+            userId: botState.selfUserId,
             isOwoEnabled: botState.isOwoEnabled
         });
     }
@@ -205,6 +207,7 @@ function resumeBot() {
         if (process.send) {
             process.send({
                 type: 'owo_status_update',
+                userId: botState.selfUserId,
                 isOwoEnabled: botState.isOwoEnabled
             });
         }
@@ -234,6 +237,7 @@ function toggleBooleanState(stateKey, logName = stateKey) {
     if (stateKey === 'isOwoEnabled' && process.send) {
         process.send({
             type: 'owo_status_update',
+            userId: botState.selfUserId,
             isOwoEnabled: botState.isOwoEnabled
         });
     }
@@ -293,6 +297,7 @@ function resetBotState() {
     // Clear timed channels and active farm
     botState.timedChannels = {};
     botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
+    botState.selfUserId = null;
 }
 
 /**
@@ -336,6 +341,15 @@ function removeUserChannelList(userId) {
 }
 
 /**
+ * Set self user ID for status update routing
+ *
+ * @param {string} userId - Self user ID
+ */
+function setSelfUserId(userId) {
+    botState.selfUserId = userId || null;
+}
+
+/**
  * Get the current bot state as a plain object
  *
  * Useful for logging or debugging purposes.
@@ -376,6 +390,7 @@ module.exports = {
     getUserChannelList,
     hasUserChannelList,
     removeUserChannelList,
+    setSelfUserId,
     shouldRunLoop,
     initializeConfig,
     resetBotState,

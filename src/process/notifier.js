@@ -99,15 +99,14 @@ process.on('message', (message) => {
     handleCaptchaSolved(message.userId);
   }
   else if (message.type === 'owo_status_update') {
-    // Update OWO status for all users
-    authorizedUserIds.forEach(userId => {
-      const currentState = userFarmStates.get(userId) || { isChannelFarming: false, isPermanentFarming: false };
-      userFarmStates.set(userId, {
+    if (message.userId) {
+      const currentState = userFarmStates.get(message.userId) || { isChannelFarming: false, isPermanentFarming: false };
+      userFarmStates.set(message.userId, {
         ...currentState,
         isOwoEnabled: message.isOwoEnabled
       });
-    });
-    conditionalLog('📨 Bot.js: OWO status update received:', message.isOwoEnabled);
+    }
+    conditionalLog('📨 Bot.js: OWO status update received:', message.userId, message.isOwoEnabled);
   }
   else if (message.type === 'farm_status_update' && message.userId) {
     // Update farm status based on command result

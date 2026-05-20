@@ -10,7 +10,7 @@
 
 const { Client } = require('discord.js-selfbot-v13');
 const configManager = require('../config/manager');
-const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList } = require('../core/state');
+const { botState, resumeBot, stopBot, toggleBooleanState, initializeConfig, setUserChannelList, getUserChannelList, hasUserChannelList, removeUserChannelList, setSelfUserId } = require('../core/state');
 const { owoLoop, whwbLoop, cycleChannels, microPauseLoop } = require('../core/farming');
 const { handleIncomingMessage, handleCaptchaDM, clearCaptchaState } = require('../handlers/messageHandler');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
@@ -84,6 +84,8 @@ async function initializeWorker() {
  * Handle client ready event
  */
 client.on('ready', async () => {
+    setSelfUserId(client.user.id);
+
     // Notify main process that we're ready
     if (process.send) {
         process.send({
@@ -184,6 +186,7 @@ async function handleCommand(message) {
             // Also send OWO status update to update button states
             process.send({
                 type: 'owo_status_update',
+                userId: client.user.id,
                 isOwoEnabled: botState.isOwoEnabled
             });
 
@@ -363,6 +366,7 @@ function startTemporaryFarm(channelId, channelTimer) {
                 if (process.send) {
                     process.send({
                         type: 'owo_status_update',
+                        userId: client.user.id,
                         isOwoEnabled: false
                     });
 
@@ -465,10 +469,14 @@ async function handlePermanentFarm(userId) {
         // Check if selfbot can send messages to any channel
         let hasAccess = false;
         for (const channelId of channelList) {
-            const channel = client.channels.cache.get(channelId);
-            if (channel && channel.viewable && channel.permissionsFor(client.user).has('SendMessages')) {
-                hasAccess = true;
-                break;
+            try {
+                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId);
+                if (channel && channel.viewable && channel.permissionsFor(client.user).has('SendMessages')) {
+                    hasAccess = true;
+                    break;
+                }
+            } catch (error) {
+                Loggers.Bot.debug(`Channel access check failed for ${channelId}: ${error.message}`);
             }
         }
 

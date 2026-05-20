@@ -446,7 +446,9 @@ async function performFarmingCooldownDelay(client, channelId, nextCommand, total
                 await channel.sendTyping();
                 typingStarted = true;
                 Loggers.Farm.info(`[HUMANIZER] Cooldown bitimi beklenirken erken yazıyor durumu tetiklendi (Kalan süre: ${Math.round(typingDelay / 1000)}s)`);
-            } catch {}
+            } catch (error) {
+                Loggers.Farm.debug(`[HUMANIZER] Early typing trigger failed: ${error.message}`);
+            }
         }
     }
 

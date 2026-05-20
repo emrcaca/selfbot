@@ -32,6 +32,12 @@ const BANNER_WIDTH = 45;
 /** Duration to keep interaction responses tracked (ms) */
 const INTERACTION_TRACK_DURATION = 20000;
 
+/** Base delay for worker restart attempts (ms) */
+const WORKER_RESTART_BASE_DELAY = 5000;
+
+/** Max delay for worker restart attempts (ms) */
+const WORKER_RESTART_MAX_DELAY = 60000;
+
 // ============================================================================
 // STATE MANAGEMENT
 // ============================================================================
@@ -47,6 +53,12 @@ const respondedInteractions = new Set();
 
 /** Global configuration object */
 let globalConfig = null;
+
+/** Worker restart counters keyed by worker index */
+const workerRestartCounters = new Map();
+
+/** Shutdown guard to prevent respawning during process exit */
+let isShuttingDown = false;
 
 // ============================================================================
 // ERROR HANDLING
@@ -100,6 +112,29 @@ function displayBanner() {
 // SELFBOT PROCESS MANAGEMENT
 // ============================================================================
 
+function getWorkerRestartDelay(index) {
+    const attempts = workerRestartCounters.get(index) || 0;
+    const delay = Math.min(WORKER_RESTART_BASE_DELAY * (2 ** attempts), WORKER_RESTART_MAX_DELAY);
+    workerRestartCounters.set(index, attempts + 1);
+    return delay;
+}
+
+function scheduleWorkerRespawn(token, index) {
+    if (isShuttingDown) {
+        return;
+    }
+
+    const restartDelay = getWorkerRestartDelay(index);
+    Loggers.Main.warn(`Restarting selfbot worker #${index} in ${restartDelay}ms`);
+
+    setTimeout(() => {
+        if (isShuttingDown) {
+            return;
+        }
+        spawnSelfbotProcess(token, index);
+    }, restartDelay);
+}
+
 /**
  * Creates and manages a selfbot worker process
  * @param {string} token - Discord user token for the selfbot
@@ -149,6 +184,10 @@ function spawnSelfbotProcess(token, index) {
         } else {
             Loggers.Main.info(`Selfbot process exited (Index: ${index}, Code: ${code}, Signal: ${signal})`);
         }
+
+        if (!isShuttingDown) {
+            scheduleWorkerRespawn(token, index);
+        }
     });
 
     return childProcess;
@@ -163,7 +202,7 @@ function spawnSelfbotProcess(token, index) {
 function handleWorkerMessage(childProcess, message, index) {
     switch (message.type) {
         case 'selfbot_ready':
-            handleSelfbotReady(childProcess, message);
+            handleSelfbotReady(childProcess, message, index);
             break;
 
         case 'komut_sonucu':
@@ -200,8 +239,10 @@ function handleWorkerMessage(childProcess, message, index) {
  * @param {ChildProcess} childProcess - The worker process instance
  * @param {Object} message - Message containing user ID
  */
-function handleSelfbotReady(childProcess, message) {
+function handleSelfbotReady(childProcess, message, index) {
     const { userId } = message;
+
+    workerRestartCounters.delete(index);
 
     // Store the process reference
     selfbotProcesses.set(userId, childProcess);
@@ -427,6 +468,7 @@ async function initializeApplication() {
  * Cleanup function called on process exit
  */
 function cleanup() {
+    isShuttingDown = true;
     Loggers.Main.info('Cleaning up...');
     clearAllTrackedTimeouts();
 

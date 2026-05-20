@@ -11,6 +11,7 @@
 
 const { PROBABILITIES } = require('../core/state');
 const { getRandomInt, delay } = require('../utils/helpers');
+const { Loggers } = require('../utils/logger');
 
 // ============================================================================
 // CONSTANTS
@@ -80,7 +81,8 @@ async function getChannel(client, channelId) {
             channelCache.set(channelId, { channel, timestamp: Date.now() });
         }
         return channel;
-    } catch {
+    } catch (error) {
+        Loggers.Bot.debug(`Channel fetch failed for ${channelId}: ${error.message}`);
         return null;
     }
 }
@@ -121,7 +123,9 @@ async function sendTyping(client, channelId, messageContent = '') {
             
             const finalDelay = totalTypingTime + reactionTime;
             await delay(finalDelay);
-        } catch {}
+        } catch (error) {
+            Loggers.Bot.debug(`sendTyping failed for channel ${channelId}: ${error.message}`);
+        }
     }
 }
 
@@ -135,7 +139,8 @@ async function sendMessage(client, channelId, messageContent) {
                 await delay(getRandomInt(200, 500));
                 const sentMessage = await channel.send(messageContent);
                 resolve(sentMessage);
-            } catch {
+            } catch (error) {
+                Loggers.Bot.debug(`sendMessage failed for channel ${channelId}: ${error.message}`);
                 resolve(null);
             }
         });
