@@ -56,15 +56,11 @@ async function sendTelegramMessage(message, options = {}) {
 async function sendCaptchaNotification(captchaData) {
     const { userId, username } = captchaData;
     const message = `
-🚨 <b>CAPTCHA Detected!</b>
-
-👤 <b>User:</b> ${username || 'Unknown'}
-🆔 <b>User ID:</b> <code>${userId}</code>
-
-⚠️ Bot stopped. To solve the CAPTCHA:
-🔗 ${CAPTCHA_URL}
-
-Bot will automatically resume after CAPTCHA is solved.
+🚨 <b>Captcha Tespit Edildi</b>
+👤 <b>Kullanıcı:</b> ${username || 'Bilinmiyor'}
+🆔 <b>Kullanıcı ID:</b> <code>${userId}</code>
+🔗 <b>Doğrulama:</b> ${CAPTCHA_URL}
+— <b>Durum:</b> Farm durduruldu
     `.trim();
 
     const sent = await sendTelegramMessage(message, { parseMode: 'HTML' });
@@ -76,11 +72,9 @@ Bot will automatically resume after CAPTCHA is solved.
 
 async function sendCaptchaSolvedNotification(userId) {
     const message = `
-✅ <b>CAPTCHA Solved!</b>
-
-🆔 <b>User ID:</b> <code>${userId}</code>
-
-Bot is automatically resuming...
+✅ <b>Captcha Çözüldü</b>
+🆔 <b>Kullanıcı ID:</b> <code>${userId}</code>
+— <b>Durum:</b> Farm yeniden başlatılıyor
     `.trim();
 
     return await sendTelegramMessage(message, { parseMode: 'HTML' });
@@ -91,13 +85,11 @@ async function sendChannelAlert(alertData) {
     const truncatedContent = content ? content.substring(0, MAX_ALERT_CONTENT_LENGTH) : 'N/A';
 
     const message = `
-⚠️ <b>Farm Channel Alert</b>
-
-📢 <b>Channel:</b> <code>${channelId}</code>
-👤 <b>User:</b> ${author || 'Unknown'}
-💬 <b>Message:</b> ${truncatedContent}
-
-Farm has been automatically stopped.
+⚠️ <b>Farm Kanal Uyarısı</b>
+👤 <b>Kullanıcı:</b> ${author || 'Bilinmiyor'}
+📢 <b>Kanal:</b> <code>${channelId}</code>
+💬 <b>Mesaj:</b> ${truncatedContent}
+— <b>Durum:</b> Farm durduruldu
     `.trim();
 
     return await sendTelegramMessage(message, { parseMode: 'HTML' });

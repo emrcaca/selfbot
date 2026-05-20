@@ -290,7 +290,11 @@ function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
   const permanentButtonLabel = isPermanentFarming ? 'Durdur' : 'Başlat';
   const permanentButtonStyle = isPermanentFarming ? ButtonStyle.Danger : ButtonStyle.Success;
 
-  const titleText = new TextDisplayBuilder().setContent('### Farm Kontrol');
+  let statusLabel = 'Kapalı';
+  if (isChannelFarming) statusLabel = 'Geçici Aktif';
+  else if (isPermanentFarming) statusLabel = 'Kalıcı Aktif';
+
+  const titleText = new TextDisplayBuilder().setContent('### Farm • Kontrol');
 
   const temporaryButton = new ButtonBuilder()
     .setCustomId('farm_this_channel')
@@ -304,17 +308,17 @@ function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
 
   const tempSection = new SectionBuilder()
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('Geçici')
+      new TextDisplayBuilder().setContent('• Geçici Farm\n-# Sadece bu kanalda çalışır')
     )
     .setButtonAccessory(temporaryButton);
 
   const permSection = new SectionBuilder()
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent('Kalıcı')
+      new TextDisplayBuilder().setContent('• Kalıcı Farm\n-# Kayıtlı kanallarda sürekli çalışır')
     )
     .setButtonAccessory(permanentButton);
 
-  const footerText = new TextDisplayBuilder().setContent('Durum: butonlardan yönet.');
+  const footerText = new TextDisplayBuilder().setContent(`— Durum: ${statusLabel}`);
 
   return [
     new ContainerBuilder()
