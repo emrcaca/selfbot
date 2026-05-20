@@ -318,7 +318,7 @@ function generateFarmControlComponents(isChannelFarming, isPermanentFarming) {
     )
     .setButtonAccessory(permanentButton);
 
-  const footerText = new TextDisplayBuilder().setContent(`— Durum: ${statusLabel}`);
+  const footerText = new TextDisplayBuilder().setContent(`Durum: ${statusLabel}`);
 
   return [
     new ContainerBuilder()
