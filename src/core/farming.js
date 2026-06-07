@@ -187,7 +187,14 @@ async function owoLoop(client) {
                 }
 
                 // Send OWO command
-                await sendMessage(client, channelId, COMMANDS.OWO);
+                const owoSent = await sendMessage(client, channelId, COMMANDS.OWO);
+
+                if (!owoSent) {
+                    Loggers.Farm.warn(`Failed to send OWO to channel ${channelId}, skipping to next channel.`);
+                    advanceToNextChannel();
+                    continue;
+                }
+
                 Loggers.Farm.info(`OWO command sent to channel: ${channelId}`);
 
                 // Random sleep after command
@@ -252,6 +259,12 @@ async function whwbLoop(client) {
                 // Send WH command
                 const whSent = await sendMessage(client, channelId, COMMANDS.WH);
 
+                if (!whSent) {
+                    Loggers.Farm.warn(`Failed to send WH to channel ${channelId}, skipping to next channel.`);
+                    advanceToNextChannel();
+                    continue;
+                }
+
                 if (whSent) {
                     // Delay between WH and WB
                     await delay(getRandomInt(DELAYS.MESSAGE.MIN, DELAYS.MESSAGE.MAX));
@@ -260,7 +273,14 @@ async function whwbLoop(client) {
                     await sendTyping(client, channelId, COMMANDS.WB);
 
                     // Send WB command
-                    await sendMessage(client, channelId, COMMANDS.WB);
+                    const wbSent = await sendMessage(client, channelId, COMMANDS.WB);
+
+                    if (!wbSent) {
+                        Loggers.Farm.warn(`Failed to send WB to channel ${channelId}, skipping to next channel.`);
+                        advanceToNextChannel();
+                        continue;
+                    }
+
                     Loggers.Farm.info(`WH/WB commands sent to channel: ${channelId}`);
                 }
 

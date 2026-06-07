@@ -452,8 +452,28 @@ async function handlePermanentFarm(userId) {
         return 'No channels in the permanent list. Please add channels first using /setch or /channels add.';
     }
 
-    // Temporary override the channel list for this user
-    const originalChannelIds = botState.channelIds;
+    // If permanent farming is already active, toggle it OFF
+    if (botState.isOwoEnabled && !botState.tempFarmChannel) {
+        botState.isOwoEnabled = false;
+        stopBot();
+        if (botState.enableConsoleLog) {
+            console.log('[STATE] Owo Farm disabled.');
+        }
+        if (process.send) {
+            process.send({
+                type: 'owo_status_update',
+                userId: botState.selfUserId,
+                isOwoEnabled: false
+            });
+        }
+        return 'Farming disabled.';
+    }
+
+    // If we get here, either farming is off or temporary farming is active
+    // In either case, we want to enable permanent farming
+
+    // Store original channel references
+    const originalChannelIds = [...botState.channelIds];
     const originalChannelIndex = botState.currentChannelIndex;
 
     // Use user-specific channel list
@@ -462,51 +482,57 @@ async function handlePermanentFarm(userId) {
         botState.currentChannelIndex = 0;
     }
 
-    // Toggle farming
-    toggleBooleanState('isOwoEnabled', 'Owo Farm');
+    // Stop any active temporary farm
+    if (botState.activeTimedFarm.timeoutId) {
+        clearTimeout(botState.activeTimedFarm.timeoutId);
+    }
+    botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
+    botState.tempFarmChannel = null;
 
-    if (botState.isOwoEnabled) {
-        // Check if selfbot can send messages to any channel
-        let hasAccess = false;
-        for (const channelId of channelList) {
-            try {
-                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId);
-                if (channel && channel.viewable && channel.permissionsFor(client.user).has('SendMessages')) {
-                    hasAccess = true;
-                    break;
-                }
-            } catch (error) {
-                Loggers.Bot.debug(`Channel access check failed for ${channelId}: ${error.message}`);
+    // Filter channels to only those the selfbot can access
+    const accessibleChannels = [];
+    const inaccessibleChannels = [];
+    for (const channelId of channelList) {
+        try {
+            const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId);
+            if (channel && channel.viewable && channel.permissionsFor(client.user).has('SendMessages')) {
+                accessibleChannels.push(channelId);
+            } else {
+                inaccessibleChannels.push(channelId);
             }
+        } catch (error) {
+            Loggers.Bot.debug(`Channel access check failed for ${channelId}: ${error.message}`);
+            inaccessibleChannels.push(channelId);
         }
+    }
 
-        if (!hasAccess) {
-            // No access to any channel, revert the change
-            botState.isOwoEnabled = false;
-            stopBot();
-            if (userId && hasUserChannelList(userId)) {
-                botState.channelIds = originalChannelIds;
-                botState.currentChannelIndex = originalChannelIndex;
-            }
-            return 'You do not have access to any of the permanent channels. Please check your permissions or add different channels.';
-        }
-
-        // Stop temporary farm when starting permanent farm
-        if (botState.activeTimedFarm.timeoutId) {
-            clearTimeout(botState.activeTimedFarm.timeoutId);
-        }
-        botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
-        botState.tempFarmChannel = null;
-
-        resumeBot();
-        return `Farming enabled for permanent channels (${channelSource} list with ${channelList.length} channel(s)). Will start shortly.`;
-    } else {
-        stopBot();
-        // Restore original channel list
+    if (accessibleChannels.length === 0) {
         botState.channelIds = originalChannelIds;
         botState.currentChannelIndex = originalChannelIndex;
-        return 'Farming disabled.';
+        return 'You do not have access to any of the permanent channels. Please check your permissions or add different channels.';
     }
+
+    // Only use accessible channels for farming
+    botState.channelIds = accessibleChannels;
+    botState.currentChannelIndex = 0;
+
+    if (inaccessibleChannels.length > 0 && botState.enableConsoleLog) {
+        console.log(`[FARM] Skipping ${inaccessibleChannels.length} inaccessible channel(s). Using ${accessibleChannels.length} channel(s).`);
+    }
+
+    // Enable permanent farming
+    botState.isOwoEnabled = true;
+    resumeBot();
+
+    if (process.send) {
+        process.send({
+            type: 'owo_status_update',
+            userId: botState.selfUserId,
+            isOwoEnabled: true
+        });
+    }
+
+    return `Farming enabled for permanent channels (${channelSource} list with ${channelList.length} channel(s)). Will start shortly.`;
 }
 
 /**
