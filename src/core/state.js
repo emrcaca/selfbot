@@ -35,7 +35,7 @@ const CAPTCHA_KEYWORDS = [
  */
 const DELAYS = {
     /** Delay range for sending typing indicator */
-    TYPING: { MIN: 200, MAX: 1000 },
+    TYPING: { MIN: 200, MAX: 600 },
 
     /** Delay range between sending messages */
     MESSAGE: { MIN: 200, MAX: 500 },
