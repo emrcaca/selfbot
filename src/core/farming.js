@@ -497,9 +497,6 @@ module.exports = {
     microPauseLoop,
 
     // Channel management
-    getCurrentChannelId,
-    advanceToNextChannel,
 
     // Utility functions
-    performRandomSleep
 };

@@ -276,30 +276,6 @@ function shouldRunLoop(loopType = 'any') {
             return true;
     }
 }
-
-/**
- * Reset the bot state to initial values
- *
- * Useful for testing or when restarting the bot without
- * completely reloading the application.
- */
-function resetBotState() {
-    botState.isRunning = false;
-    botState.isOwoEnabled = false;
-    botState.isSleeping = false;
-    botState.captchaDetected = false;
-    botState.isProcessingOwo = false;
-    botState.isProcessingWhWb = false;
-    botState.currentChannelIndex = 0;
-    botState.tempFarmChannel = null;
-    botState.monitoring = false;
-
-    // Clear timed channels and active farm
-    botState.timedChannels = {};
-    botState.activeTimedFarm = { channelId: null, startTime: null, timeoutId: null };
-    botState.selfUserId = null;
-}
-
 /**
  * Set channel list for a specific user
  *
@@ -348,29 +324,6 @@ function removeUserChannelList(userId) {
 function setSelfUserId(userId) {
     botState.selfUserId = userId || null;
 }
-
-/**
- * Get the current bot state as a plain object
- *
- * Useful for logging or debugging purposes.
- *
- * @returns {Object} Copy of the current bot state
- */
-function getBotStateSnapshot() {
-    return {
-        isRunning: botState.isRunning,
-        isOwoEnabled: botState.isOwoEnabled,
-        isSleeping: botState.isSleeping,
-        captchaDetected: botState.captchaDetected,
-        isProcessingOwo: botState.isProcessingOwo,
-        isProcessingWhWb: botState.isProcessingWhWb,
-        currentChannelIndex: botState.currentChannelIndex,
-        channelCount: botState.channelIds.length,
-        tempFarmChannel: botState.tempFarmChannel,
-        monitoring: botState.monitoring
-    };
-}
-
 // ============================================================================
 // EXPORTS
 // ============================================================================
@@ -393,6 +346,4 @@ module.exports = {
     setSelfUserId,
     shouldRunLoop,
     initializeConfig,
-    resetBotState,
-    getBotStateSnapshot
 };

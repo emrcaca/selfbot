@@ -455,6 +455,5 @@ module.exports = {
     handleCaptchaDM,
 
     // CAPTCHA handling
-    handleCaptchaNotification,
     clearCaptchaState
 };
