@@ -18,7 +18,6 @@ const {
 } = require('discord.js');
 const { handleUncaughtException, handleUnhandledRejection } = require('../utils/errorHandler');
 const configManager = require('../config/manager');
-const axios = require('axios');
 
 // Get console log setting from config
 let enableConsoleLog = false;
@@ -240,18 +239,6 @@ const commands = [
         description: 'Kanal ID\'leri (sadece Set için, virgülle ayırarak)',
         type: ApplicationCommandOptionType.String,
         required: false
-      }
-    ]
-  },
-  {
-    name: 'ask',
-    description: 'AI botuna soru sor (hafızalı)',
-    options: [
-      {
-        name: 'soru',
-        description: 'Sormak istediğin şey',
-        type: ApplicationCommandOptionType.String,
-        required: true
       }
     ]
   }
@@ -502,65 +489,6 @@ client.on('interactionCreate', async interaction => {
         });
 
         await sendV2Reply(interaction, `### SETCH\n${resultMessage}`);
-      } else if (interaction.commandName === 'ask') {
-        const question = interaction.options.getString('soru');
-
-        try {
-          const botToken = process.env.BOT_TOKEN;
-          const payload = {
-            type: 2, // APPLICATION_COMMAND
-            token: interaction.token,
-            id: interaction.id,
-            application_id: client.user.id,
-            channel_id: interaction.channelId,
-            guild_id: interaction.guildId,
-            user: {
-              id: interaction.user.id,
-              username: interaction.user.username,
-              discriminator: interaction.user.discriminator,
-              avatar: interaction.user.avatar
-            },
-            data: {
-              id: interaction.commandId,
-              name: 'ask',
-              type: 1,
-              options: [
-                {
-                  name: 'soru',
-                  type: 3,
-                  value: question
-                }
-              ]
-            }
-          };
-
-          const response = await axios.post('https://bot.emrxxxx.workers.dev/interactions', payload, {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Proxy-Auth': botToken,
-              'User-Agent': 'Discord-Bot-Proxy'
-            },
-            timeout: 10000
-          });
-
-          if (response.status === 204 || (response.status === 200 && !response.data)) {
-            // Success! The Cloudflare Worker has already edited the reply directly via Discord API.
-            return;
-          }
-
-          if (response.data && response.data.data && response.data.data.content) {
-            await sendV2Reply(interaction, response.data.data.content);
-          } else if (response.data && response.data.content) {
-            await sendV2Reply(interaction, response.data.content);
-          } else if (typeof response.data === 'string') {
-            await sendV2Reply(interaction, response.data);
-          } else {
-            await sendV2Reply(interaction, '### Cloudflare Worker\'dan geçersiz yanıt alındı.');
-          }
-        } catch (error) {
-          conditionalError('❌ Bot.js: Cloudflare Worker yönlendirme hatası:', error.message);
-          await sendV2Reply(interaction, `### Cloudflare Worker ile iletişim kurulamadı.\nHata: ${error.message}`);
-        }
       }
 
     } else if (interaction.isButton()) {
